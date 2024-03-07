@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">BeaconDetection</string>
+    <string name="start_button_text" >Start</string>
+    <string name="stop_button_text" >Stop</string>
+    <string name="not_support_bluetooth_msg" >No bluetooth soported</string>
+    <string name="no_bluetooth_msg">"No bluetooth "</string>
+    <string name="start_looking_for_beacons" >Start looking</string>
+    <string name="no_beacons_detected" >No beacons detected</string>
+    <string name="beacon_detected" >Beacon detected</string>
+    <string name="stop_looking_for_beacons" >Stop looking</string>
+    <string name="location_access_needed" />
+    <string name="grant_location_access" />
+    <string name="funcionality_limited" />
+    <string name="location_not_granted" />
+    <string name="cannot_discover_beacons" >Cannot discover</string>
+    <string name="location_disabled" />
+    <string name="location_settings" />
 </resources>
