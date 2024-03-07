@@ -9,6 +9,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Escanear"
-        android:layout_centerInParent="true" />
+        android:layout_alignParentTop="true" />
+
+    <Button
+        android:id="@+id/stopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Parar"
+        android:layout_below="@id/scanButton" />
 
 </RelativeLayout>
