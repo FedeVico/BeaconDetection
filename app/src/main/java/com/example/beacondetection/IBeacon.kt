@@ -86,6 +86,6 @@ class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanRes
     }
 
     override fun toString(): String {
-        return "Major= " + major.toString() + " Minor= " + minor.toString() + " rssi=" + getRssi()
+        return "Major= " + major.toString() + " Minor= " + minor.toString() + " rssi=" + getRssi() + "distance=" + getDistance()
     }
 }

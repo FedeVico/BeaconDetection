@@ -1,7 +1,9 @@
 package com.example.beacondetection
 
+import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
 
+@SuppressLint("MissingPermission")
 open class BLEDevice(scanResult: ScanResult) {
 
     /**
@@ -13,6 +15,11 @@ open class BLEDevice(scanResult: ScanResult) {
      * Device mac address
      */
     private var address: String = ""
+
+    /**
+     * Device distance based on RSSI
+     */
+    private var distance: Int = 0
 
     /**
      * Device friendly name
@@ -34,5 +41,11 @@ open class BLEDevice(scanResult: ScanResult) {
 
     fun getRssi(): Int {
         return rssi
+    }
+
+    fun getDistance(): Double {
+        val measuredPower = -59 // Potencia medida en dBm a 1 metro de distancia
+        val N = 2.0 // Factor de atenuación de la señal
+        return Math.pow(10.0, ((measuredPower - rssi) / (10 * N)))
     }
 }

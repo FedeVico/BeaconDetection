@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -29,6 +30,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.scanBtn.setOnClickListener { startScan() }
+        binding.buttonMap.setOnClickListener {
+            val intent = Intent(this@MainActivity, MapActivity::class.java)
+            startActivity(intent)
+        }
         binding.exitBtn.setOnClickListener { exitApp() }
         val recycleView: RecyclerView = findViewById(R.id.deviceList)
         deviceList = ArrayList()
@@ -56,11 +61,6 @@ class MainActivity : AppCompatActivity() {
         exitProcess(0)
     }
 
-    /**
-     * Start BLE scan
-     * Check Bluetooth before scanning.
-     * If Bluetooth is disabled, request user to turn on Bluetooth
-     */
     private fun startScan() {
         // Check if scanService is initialized
         if (::scanService.isInitialized) {
@@ -85,6 +85,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun onRadioAllClicked(view: View) {
+
+    }
+
+    fun onRadioiBeaconClicked(view: View) {
+
+    }
+    /**
+     * Start BLE scan
+     * Check Bluetooth before scanning.
+     * If Bluetooth is disabled, request user to turn on Bluetooth
+     */
     // necessary permissions on Android <12
     private val BLE_PERMISSIONS = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
