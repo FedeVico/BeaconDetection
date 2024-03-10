@@ -1,5 +1,7 @@
 plugins {
     id("com.android.application")
+    id ("org.jetbrains.kotlin.android")
+
 }
 
 android {
@@ -15,7 +17,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    buildFeatures {
+        dataBinding = true
+        viewBinding = true
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
