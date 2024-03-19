@@ -25,25 +25,6 @@
             android:gravity="center"
             android:weightSum="10">
 
-            <RadioGroup
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <RadioButton android:id="@+id/radio_all"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_all"
-                    android:layout_marginEnd="20dp"
-                    android:onClick="onRadioAllClicked"
-                    android:checked="true"/>
-                <RadioButton android:id="@+id/radio_ninjas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_ibeacon"
-                    android:layout_marginEnd="20dp"
-                    android:onClick="onRadioiBeaconClicked"/>
-            </RadioGroup>
-
             <Button
                 android:id="@+id/scanBtn"
                 android:layout_width="120dp"

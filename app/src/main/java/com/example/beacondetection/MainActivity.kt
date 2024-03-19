@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -85,13 +84,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun onRadioAllClicked(view: View) {
-
-    }
-
-    fun onRadioiBeaconClicked(view: View) {
-
-    }
     /**
      * Start BLE scan
      * Check Bluetooth before scanning.
