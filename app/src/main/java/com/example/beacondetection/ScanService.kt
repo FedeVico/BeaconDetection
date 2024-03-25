@@ -9,6 +9,7 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.util.Log
+import com.example.beacondetection.DB.SQLiteHelper
 
 class ScanService {
 
@@ -25,8 +26,13 @@ class ScanService {
     private lateinit var deviceList: ArrayList<Any>
     private lateinit var adapter: DeviceListAdapter
 
+    private lateinit var databaseHelper: SQLiteHelper
+
     constructor(context: Context, deviceList: ArrayList<Any>, adapter: DeviceListAdapter) {
         this.deviceList = deviceList
+
+        databaseHelper = SQLiteHelper.getInstance(context)
+        databaseHelper.openDatabase()
 
         builder = ScanSettings.Builder()
         builder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -41,6 +47,8 @@ class ScanService {
         if (isBluetoothEnabled()) {
             bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
         }
+        //databaseHelper.closeDatabase()
+
     }
 
     fun initScanner() {
@@ -83,6 +91,7 @@ class ScanService {
         Log.d(TAG, "@startBLEScan start beacon scan")
         isScanning = false
         bluetoothLeScanner.stopScan(leScanCallback)
+        databaseHelper.closeDatabase()
     }
 
     /**
@@ -92,12 +101,14 @@ class ScanService {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             if (result != null) {
                 val scanRecord = result.scanRecord
-                Log.e(TAG, "@result: " + result.device.address)
+                //Log.e(TAG, "@result: " + result.device.address)
                 super.onScanResult(callbackType, result)
                 try {
                     if (scanRecord != null) {
                         if (isIBeacon(scanRecord.bytes)) {
                             val iBeacon = IBeacon(result, scanRecord.bytes)
+                            // Ya tenemos en `iBeacon` la información extraída
+                            insertBeacon(iBeacon)
                             val idx = checkDeviceExists(result)
                             Log.e(TAG, iBeacon.toString())
                             if (idx == -1) {
@@ -115,6 +126,9 @@ class ScanService {
                                 // update
                                 deviceList[idx] = ble
                             }
+
+                            // Insertar el dispositivo BLE en la base de datos
+                            // insertBLEDevice(ble)
                         }
                         adapter.notifyDataSetChanged()
                     }
@@ -122,9 +136,18 @@ class ScanService {
                     Log.e(TAG, "@startScan SecurityException: " + e.message)
                 }
             }
-            return
         }
+
+        // Funciones para insertar en la base de datos (modifica según tu estructura)
+        private fun insertBeacon(beacon: IBeacon) {
+            databaseHelper.insertOrUpdateDevice(beacon)
+        }
+
+        /*private fun insertBLEDevice(device: BLEDevice) {
+            databaseHelper.insertDevice(device)
+        }*/
     }
+
 
     /**
      * check if our device list already has a scan result whose MAC address is identical to the new incoming ScanResult
@@ -156,5 +179,4 @@ class ScanService {
     fun isScanning(): Boolean {
         return isScanning
     }
-
 }

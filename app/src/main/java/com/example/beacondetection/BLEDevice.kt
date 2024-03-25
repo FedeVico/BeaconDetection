@@ -2,6 +2,7 @@ package com.example.beacondetection
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
+import kotlin.math.pow
 
 @SuppressLint("MissingPermission")
 open class BLEDevice(scanResult: ScanResult) {
@@ -46,6 +47,6 @@ open class BLEDevice(scanResult: ScanResult) {
     fun getDistance(): Double {
         val measuredPower = -59 // Potencia medida en dBm a 1 metro de distancia
         val N = 2.0 // Factor de atenuación de la señal
-        return Math.pow(10.0, ((measuredPower - rssi) / (10 * N)))
+        return 10.0.pow(((measuredPower - rssi) / (10 * N)))
     }
 }
