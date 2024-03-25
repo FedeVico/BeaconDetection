@@ -1,9 +1,13 @@
 package com.example.beacondetection
 
+import android.content.Context
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.example.beacondetection.DB.SQLiteHelper
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -12,16 +16,27 @@ import org.osmdroid.views.overlay.Marker
 
 class MapActivity : AppCompatActivity() {
 
-    private lateinit var deviceList: ArrayList<Any>
+    private lateinit var deviceList: ArrayList<Pair<String, Double>>
     private lateinit var estimatedPosition: Position
-
+    private val beaconsWithPosition = listOf(
+        BeaconWithPosition("11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
+        BeaconWithPosition("22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
+        BeaconWithPosition("33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
+    )
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        // Obtener la lista de dispositivos del intent
-        deviceList = ArrayList()
+        // Obtener una instancia de SQLiteHelper
+        val dbHelper = SQLiteHelper.getInstance(this)
+        dbHelper.openDatabase()
+
+        // Obtener la lista de dispositivos con uuid y distancia
+        deviceList = dbHelper.getAllDevicesUuidAndDistance()
+
+        // Cerrar la base de datos cuando hayas terminado
+        //dbHelper.closeDatabase()
 
         // Configurar el agente de usuario
         val userAgentValue = "BeaconDetection"
@@ -36,34 +51,49 @@ class MapActivity : AppCompatActivity() {
     // Función para mostrar la posición en el mapa
     private fun showPositionOnMap(position: Position) {
         val mapView = findViewById<MapView>(R.id.map)
-        mapView.setTileSource(TileSourceFactory.MAPNIK) // Utiliza el proveedor de mapas MAPNIK (OpenStreetMap)
-        mapView.setMultiTouchControls(true) // Habilita los controles de zoom multitáctiles
+        mapView.setTileSource(TileSourceFactory.MAPNIK)
+        mapView.setMultiTouchControls(true)
 
         val mapController = mapView.controller
         val startPoint = GeoPoint(position.latitude, position.longitude)
         mapController.setCenter(startPoint)
-        mapController.setZoom(15.0)
+        mapController.setZoom(20.0)
 
         val marker = Marker(mapView)
         marker.position = startPoint
         marker.title = "Ubicación Inicial"
         mapView.overlays.add(marker)
 
-        // Si se ha calculado la posición relativa, muestra también esa posición
+        // Calcular la posición relativa (si puede) y mostrarla
         if (deviceList.isNotEmpty()) {
-            // Calcular la posición relativa
             val estimatedPosition = calculatePosition()
             if (estimatedPosition != null) {
                 val estimatedPoint = GeoPoint(estimatedPosition.latitude, estimatedPosition.longitude)
                 mapController.setCenter(estimatedPoint)
 
-                // Agregar un marcador en la posición estimada
                 val estimatedMarker = Marker(mapView)
                 estimatedMarker.position = estimatedPoint
                 estimatedMarker.title = "Mi posición estimada"
                 mapView.overlays.add(estimatedMarker)
             }
         }
+
+        // Añadir marcas de las balizas
+        addBeaconMarkers(mapView)
+    }
+
+    // Función para añadir marcas de las balizas
+    private fun addBeaconMarkers(mapView: MapView) {
+        for (beacon in beaconsWithPosition) {
+            val marker = Marker(mapView)
+            marker.position = GeoPoint(beacon.position.latitude, beacon.position.longitude)
+            marker.icon = getMarkerIcon(this)
+            mapView.overlays.add(marker)
+        }
+    }
+
+    private fun getMarkerIcon(context: Context): Drawable? {
+        return ContextCompat.getDrawable(context, R.drawable.ic_marker_red)
     }
 
     // Función para calcular la posición relativa
@@ -75,15 +105,6 @@ class MapActivity : AppCompatActivity() {
 
         // Filtrar los datos para obtener solo las balizas con información de posición (coordenadas)
         //val beaconsWithPosition = deviceList.filterIsInstance<BeaconWithPosition>()
-        val beaconsWithPosition = listOf(
-            BeaconWithPosition(Coordinate(37.58668529939439, -4.6418707907414), 0.0),
-            BeaconWithPosition(Coordinate(37.586600280680535, -4.641841956996244), 0.0),
-            BeaconWithPosition(Coordinate(37.586690081694144, -4.641685718330627), 0.0)
-        )
-        // Verificar si hay suficientes balizas con información de posición (al menos 3)
-        if (beaconsWithPosition.size < 3) {
-            return null
-        }
 
         // Obtener las coordenadas de las balizas
         val beaconCoordinates = beaconsWithPosition.map { it.position }
@@ -123,11 +144,10 @@ class MapActivity : AppCompatActivity() {
 
         return Position(posX + p1.latitude, posY + p1.longitude, 0.0)
     }
-
 }
 
 data class Coordinate(val latitude: Double, val longitude: Double)
 
 data class Position(val latitude: Double, val longitude: Double, val z: Double)
 
-data class BeaconWithPosition(val position: Coordinate, val distance: Double)
+data class BeaconWithPosition(val uuid: String, val position: Coordinate, val distance: Double)

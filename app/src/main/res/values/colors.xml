@@ -148,6 +148,7 @@
     <color name="DarkBlue">#00008B</color>
     <color name="Navy">#000080</color>
     <color name="Black">#000000</color>
+    <color name="red">#F43636</color>
 
     <array name="colors">
         <item name="White">@color/White</item>
