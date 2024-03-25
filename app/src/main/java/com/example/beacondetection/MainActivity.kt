@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.beacondetection.DB.SQLiteHelper
 import com.example.beacondetection.databinding.MainActivityBinding
 import kotlin.system.exitProcess
 
@@ -22,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scanService: ScanService
     private lateinit var adapter: DeviceListAdapter
     private lateinit var deviceList: ArrayList<Any>
+    private lateinit var databaseHelper: SQLiteHelper
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +33,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.scanBtn.setOnClickListener { startScan() }
         binding.buttonMap.setOnClickListener {
-            val intent = Intent(this@MainActivity, MapActivity::class.java)
-            startActivity(intent)
+            openMapActivity()
         }
-        binding.exitBtn.setOnClickListener { exitApp() }
+        binding.exitBtn.setOnClickListener {
+            exitApp()
+            databaseHelper.closeDatabase()
+        }
         val recycleView: RecyclerView = findViewById(R.id.deviceList)
         deviceList = ArrayList()
         this.adapter = DeviceListAdapter(this.deviceList)
@@ -47,6 +52,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun openMapActivity() {
+        // Enviar el deviceList para hacer calculos en map
+        val intent = Intent(this@MainActivity, MapActivity::class.java)
+        startActivity(intent)
+    }
+
     /**
      * exit application
      */
@@ -55,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         if (::scanService.isInitialized && scanService.isScanning()) {
             binding.scanBtn.text = resources.getString(R.string.label_scan)
             scanService.stopBLEScan()
+            databaseHelper.closeDatabase()
         }
         this@MainActivity.finish()
         exitProcess(0)

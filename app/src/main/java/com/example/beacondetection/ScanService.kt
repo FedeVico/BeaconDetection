@@ -47,8 +47,6 @@ class ScanService {
         if (isBluetoothEnabled()) {
             bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
         }
-        //databaseHelper.closeDatabase()
-
     }
 
     fun initScanner() {
@@ -91,7 +89,6 @@ class ScanService {
         Log.d(TAG, "@startBLEScan start beacon scan")
         isScanning = false
         bluetoothLeScanner.stopScan(leScanCallback)
-        databaseHelper.closeDatabase()
     }
 
     /**
@@ -121,7 +118,8 @@ class ScanService {
                             val ble = BLEDevice(result)
                             val idx = checkDeviceExists(result)
                             if (idx == -1) {
-                                deviceList.add(ble)
+                                // Desactivo las BLE temporalmente
+                                //deviceList.add(ble)
                             } else {
                                 // update
                                 deviceList[idx] = ble

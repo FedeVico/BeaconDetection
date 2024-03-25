@@ -1,6 +1,8 @@
 package com.example.beacondetection
 
+import android.os.Build
 import android.os.Bundle
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -13,12 +15,13 @@ class MapActivity : AppCompatActivity() {
     private lateinit var deviceList: ArrayList<Any>
     private lateinit var estimatedPosition: Position
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
         // Obtener la lista de dispositivos del intent
-        deviceList = intent.getSerializableExtra("deviceList") as? ArrayList<Any> ?: arrayListOf()
+        deviceList = ArrayList()
 
         // Configurar el agente de usuario
         val userAgentValue = "BeaconDetection"
@@ -26,7 +29,6 @@ class MapActivity : AppCompatActivity() {
 
         // Configurar la ubicación inicial
         val initialPosition = Position(37.586621804773564, -4.641860098344363, 0.0)
-
         // Mostrar la posición inicial en el mapa
         showPositionOnMap(initialPosition)
     }
@@ -72,8 +74,12 @@ class MapActivity : AppCompatActivity() {
         }
 
         // Filtrar los datos para obtener solo las balizas con información de posición (coordenadas)
-        val beaconsWithPosition = deviceList.filterIsInstance<BeaconWithPosition>()
-
+        //val beaconsWithPosition = deviceList.filterIsInstance<BeaconWithPosition>()
+        val beaconsWithPosition = listOf(
+            BeaconWithPosition(Coordinate(37.58668529939439, -4.6418707907414), 0.0),
+            BeaconWithPosition(Coordinate(37.586600280680535, -4.641841956996244), 0.0),
+            BeaconWithPosition(Coordinate(37.586690081694144, -4.641685718330627), 0.0)
+        )
         // Verificar si hay suficientes balizas con información de posición (al menos 3)
         if (beaconsWithPosition.size < 3) {
             return null
@@ -120,9 +126,8 @@ class MapActivity : AppCompatActivity() {
 
 }
 
-    data class Coordinate(val latitude: Double, val longitude: Double)
+data class Coordinate(val latitude: Double, val longitude: Double)
 
-    data class Position(val latitude: Double, val longitude: Double, val z: Double)
+data class Position(val latitude: Double, val longitude: Double, val z: Double)
 
-    data class BeaconWithPosition(val position: Coordinate, val distance: Double)
-
+data class BeaconWithPosition(val position: Coordinate, val distance: Double)
