@@ -32,12 +32,12 @@ class MainActivity : AppCompatActivity() {
         binding = MainActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.scanBtn.setOnClickListener { startScan() }
+        binding.scanBtn.setOnClickListener { startScan(this) }
         binding.buttonMap.setOnClickListener {
             openMapActivity()
         }
         binding.exitBtn.setOnClickListener {
-            exitApp()
+            exitApp(this)
             databaseHelper.closeDatabase()
         }
         val recycleView: RecyclerView = findViewById(R.id.deviceList)
@@ -62,18 +62,18 @@ class MainActivity : AppCompatActivity() {
     /**
      * exit application
      */
-    private fun exitApp() {
+    private fun exitApp(context: Context) {
         // if scanning service is running, stop scan then exit
         if (::scanService.isInitialized && scanService.isScanning()) {
             binding.scanBtn.text = resources.getString(R.string.label_scan)
-            scanService.stopBLEScan()
+            scanService.stopBLEScan(context)
             databaseHelper.closeDatabase()
         }
         this@MainActivity.finish()
         exitProcess(0)
     }
 
-    private fun startScan() {
+    private fun startScan(context: Context) {
         // Check if scanService is initialized
         if (::scanService.isInitialized) {
             // check Bluetooth
@@ -86,9 +86,9 @@ class MainActivity : AppCompatActivity() {
                 // start scanning BLE device
                 if (scanService.isScanning()) {
                     binding.scanBtn.text = resources.getString(R.string.label_scan)
-                    scanService.stopBLEScan()
+                    scanService.stopBLEScan(context)
                 } else {
-                    scanService.startBLEScan()
+                    scanService.startBLEScan(context)
                     binding.scanBtn.text = resources.getString(R.string.label_scanning)
                 }
             }

@@ -19,9 +19,9 @@ class MapActivity : AppCompatActivity() {
     private lateinit var deviceList: ArrayList<Pair<String, Double>>
 
     private val beaconsWithPosition = listOf(
-        BeaconWithPosition("11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
-        BeaconWithPosition("22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
-        BeaconWithPosition("33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
+        BeaconWithPosition("Habitación 1","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
+        BeaconWithPosition("Habitación 2","22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
+        BeaconWithPosition("Habitación 3","33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
     )
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,4 +151,4 @@ data class Coordinate(val latitude: Double, val longitude: Double)
 
 data class Position(val latitude: Double, val longitude: Double, val z: Double)
 
-data class BeaconWithPosition(val uuid: String, val position: Coordinate, val distance: Double)
+data class BeaconWithPosition(val name:String, val uuid: String, val position: Coordinate, val distance: Double)
