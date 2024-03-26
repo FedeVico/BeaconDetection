@@ -4,7 +4,10 @@ import android.bluetooth.le.ScanResult
 import com.example.beacondetection.utils.ConversionUtils
 
 class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanResult) {
+    var hasEntered: Boolean = false
+    var hasExited: Boolean = false
     var hasTriggeredAlert: Boolean = false
+
     /**
      * beacon UUID
      */

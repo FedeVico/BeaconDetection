@@ -72,17 +72,22 @@ class ScanService {
     /**
      * Start BLE scan using bluetoothLeScanner
      * if app is not scanning, start scan by calling startScan and passing a callback method
-     * else stop scan
      * @return {none}
      */
     @SuppressLint("MissingPermission")
     fun startBLEScan(context: Context) {
         if (isScanning)
             return
-        Log.d(TAG, "@startBLEScan start beacon scan")
+        Log.d(TAG, "@startBLEScan iniciar escaneo de beacons")
         isScanning = true
         try {
-            bluetoothLeScanner.startScan(null, builder.build(), leScanCallback(context))
+            // Configurar ajustes de escaneo optimizados
+            val settings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // Modo de escaneo rápido
+                .setReportDelay(0) // Sin retraso en la notificación de resultados
+                .build()
+            // Iniciar escaneo con los ajustes optimizados
+            bluetoothLeScanner.startScan(null, settings, leScanCallback(context))
         } catch (e: SecurityException) {
             Log.e(TAG, "@startScan SecurityException: " + e.message)
         }
@@ -95,34 +100,40 @@ class ScanService {
         Log.d(TAG, "@startBLEScan start beacon scan")
         isScanning = false
         bluetoothLeScanner.stopScan(leScanCallback(context))
+        // Detenemos las notificaciones
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancelAll()
     }
+
+    private val beaconStates = HashMap<String, Boolean>()
+
     private fun leScanCallback(context: Context): ScanCallback {
         return object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 if (result != null) {
                     val scanRecord = result.scanRecord
-                    //Log.e(TAG, "@result: " + result.device.address)
                     super.onScanResult(callbackType, result)
                     try {
                         if (scanRecord != null) {
                             if (isIBeacon(scanRecord.bytes)) {
                                 val iBeacon = IBeacon(result, scanRecord.bytes)
                                 val distance = iBeacon.getDistance()
-                                // Ya tenemos en `iBeacon` la información extraída
                                 insertBeacon(iBeacon)
                                 val idx = checkDeviceExists(result)
-                                Log.e(TAG, iBeacon.toString())
                                 if (idx == -1) {
                                     deviceList.add(iBeacon)
                                 } else {
-                                    // update
                                     deviceList[idx] = iBeacon
                                 }
-                                // Comprobar si la distancia es menor a 5 metros y no se ha mostrado la alerta previamente
-                                if (distance < 5 && !iBeacon.hasTriggeredAlert) {
-                                    showNotification(context,"Has entrado en el radio de ${iBeacon.uuid}")
-                                    Log.e(TAG, "Has entrado en el radio de ${iBeacon.uuid}")
-                                    iBeacon.hasTriggeredAlert = true
+                                val currentInRange = distance < 5
+                                val previousInRange = beaconStates[iBeacon.getAddress()] ?: false
+                                if (currentInRange != previousInRange) {
+                                    if (currentInRange) {
+                                        showNotification(context, "Has entrado en el radio de ${iBeacon.uuid}")
+                                    } else {
+                                        showNotification(context, "Has salido del radio de ${iBeacon.uuid}")
+                                    }
+                                    beaconStates[iBeacon.getAddress()] = currentInRange
                                 }
                                 adapter.notifyDataSetChanged()
                             } else {
@@ -132,31 +143,33 @@ class ScanService {
                                     // Desactivo las BLE temporalmente
                                     //deviceList.add(ble)
                                 } else {
-                                    // update
                                     deviceList[idx] = ble
                                 }
                                 // Insertar el dispositivo BLE en la base de datos
                                 // insertBLEDevice(ble)
+                                adapter.notifyDataSetChanged()
                             }
-                            adapter.notifyDataSetChanged()
+
+                            // Limpiar el estado de los beacons que ya no están presentes en los resultados del escaneo
+                            val currentBeaconAddresses = deviceList.map { (it as IBeacon).getAddress() }
+                            val beaconAddressesToRemove = beaconStates.keys.filterNot { currentBeaconAddresses.contains(it) }
+                            beaconAddressesToRemove.forEach { beaconStates.remove(it) }
                         }
                     } catch (e: SecurityException) {
                         Log.e(TAG, "@startScan SecurityException: " + e.message)
                     }
                 }
             }
-
-            // Funciones para insertar en la base de datos (modifica según tu estructura)
-            private fun insertBeacon(beacon: IBeacon) {
-                databaseHelper.insertOrUpdateDevice(beacon)
-            }
-
-            /*private fun insertBLEDevice(device: BLEDevice) {
-                databaseHelper.insertDevice(device)
-            }*/
         }
     }
 
+    // Funciones para insertar en la base de datos (modifica según tu estructura)
+    private fun insertBeacon(beacon: IBeacon) {
+        databaseHelper.insertOrUpdateDevice(beacon)
+    }
+    /*private fun insertBLEDevice(device: BLEDevice) {
+                databaseHelper.insertDevice(device)
+            }*/
 
     // Función auxiliar para mostrar notificaciones
     private fun showNotification(context: Context, message: String) {
@@ -174,6 +187,7 @@ class ScanService {
             .setContentTitle("Beacon Alert")
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setAutoCancel(true)
 
         // Mostrar la notificación
         notificationManager.notify(1, builder.build())
