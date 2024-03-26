@@ -17,7 +17,7 @@ import org.osmdroid.views.overlay.Marker
 class MapActivity : AppCompatActivity() {
 
     private lateinit var deviceList: ArrayList<Pair<String, Double>>
-    private lateinit var estimatedPosition: Position
+
     private val beaconsWithPosition = listOf(
         BeaconWithPosition("11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
         BeaconWithPosition("22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
@@ -35,17 +35,18 @@ class MapActivity : AppCompatActivity() {
         // Obtener la lista de dispositivos con uuid y distancia
         deviceList = dbHelper.getAllDevicesUuidAndDistance()
 
-        // Cerrar la base de datos cuando hayas terminado
-        //dbHelper.closeDatabase()
-
         // Configurar el agente de usuario
         val userAgentValue = "BeaconDetection"
         Configuration.getInstance().userAgentValue = userAgentValue
 
         // Configurar la ubicación inicial
         val initialPosition = Position(37.586621804773564, -4.641860098344363, 0.0)
+
         // Mostrar la posición inicial en el mapa
         showPositionOnMap(initialPosition)
+
+        // Cerrar la base de datos cuando hayas terminado
+        //dbHelper.closeDatabase()
     }
 
     // Función para mostrar la posición en el mapa

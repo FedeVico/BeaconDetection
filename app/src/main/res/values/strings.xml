@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Beacon Detection App</string>
+    <string name="app_name">GoInside</string>
     <string name="log_ble_device">Device Name: %1$s rssi: %2$d</string>
     <string name="label_scan">Scan</string>
     <string name="label_scanning">Scanning</string>>
