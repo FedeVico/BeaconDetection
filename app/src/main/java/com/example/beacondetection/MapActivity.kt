@@ -1,29 +1,28 @@
 package com.example.beacondetection
-
-import android.content.Context
-import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
-import androidx.annotation.RequiresApi
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import com.example.beacondetection.DB.SQLiteHelper
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import java.util.Timer
+import kotlin.concurrent.timerTask
 
 class MapActivity : AppCompatActivity() {
 
     private lateinit var deviceList: ArrayList<Pair<String, Double>>
+    private lateinit var mapView: MapView
+    private var deviceMarker: Marker? = null // Referencia al marcador del dispositivo
 
     private val beaconsWithPosition = listOf(
         BeaconWithPosition("Habitación 1","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
         BeaconWithPosition("Habitación 2","22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
         BeaconWithPosition("Habitación 3","33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
     )
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
@@ -32,9 +31,6 @@ class MapActivity : AppCompatActivity() {
         val dbHelper = SQLiteHelper.getInstance(this)
         dbHelper.openDatabase()
 
-        // Obtener la lista de dispositivos con uuid y distancia
-        deviceList = dbHelper.getAllDevicesUuidAndDistance()
-
         // Configurar el agente de usuario
         val userAgentValue = "BeaconDetection"
         Configuration.getInstance().userAgentValue = userAgentValue
@@ -42,59 +38,42 @@ class MapActivity : AppCompatActivity() {
         // Configurar la ubicación inicial
         val initialPosition = Position(37.586621804773564, -4.641860098344363, 0.0)
 
-        // Mostrar la posición inicial en el mapa
-        showPositionOnMap(initialPosition)
-
-        // Cerrar la base de datos cuando hayas terminado
-        //dbHelper.closeDatabase()
-    }
-
-    // Función para mostrar la posición en el mapa
-    private fun showPositionOnMap(position: Position) {
-        val mapView = findViewById<MapView>(R.id.map)
+        // Inicializar el mapa y su configuración
+        mapView = findViewById(R.id.map)
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
-
         val mapController = mapView.controller
-        val startPoint = GeoPoint(position.latitude, position.longitude)
+        val startPoint = GeoPoint(initialPosition.latitude, initialPosition.longitude)
         mapController.setCenter(startPoint)
         mapController.setZoom(20.0)
 
-        val marker = Marker(mapView)
-        marker.position = startPoint
-        marker.title = "Ubicación Inicial"
-        mapView.overlays.add(marker)
+        // Crear el marcador del dispositivo una sola vez
+        deviceMarker = Marker(mapView)
+        mapView.overlays.add(deviceMarker)
 
-        // Calcular la posición relativa (si puede) y mostrarla
-        if (deviceList.isNotEmpty()) {
-            val estimatedPosition = calculatePosition()
-            if (estimatedPosition != null) {
-                val estimatedPoint = GeoPoint(estimatedPosition.latitude, estimatedPosition.longitude)
-                mapController.setCenter(estimatedPoint)
-
-                val estimatedMarker = Marker(mapView)
-                estimatedMarker.position = estimatedPoint
-                estimatedMarker.title = "Mi posición estimada"
-                mapView.overlays.add(estimatedMarker)
+        // Iniciar un temporizador para actualizar la posición cada segundo
+        Timer().scheduleAtFixedRate(timerTask {
+            runOnUiThread {
+                updatePositionOnMap()
             }
-        }
-
-        // Añadir marcas de las balizas
-        addBeaconMarkers(mapView)
+        }, 1000, 1000)
     }
 
-    // Función para añadir marcas de las balizas
-    private fun addBeaconMarkers(mapView: MapView) {
-        for (beacon in beaconsWithPosition) {
-            val marker = Marker(mapView)
-            marker.position = GeoPoint(beacon.position.latitude, beacon.position.longitude)
-            marker.icon = getMarkerIcon(this)
-            mapView.overlays.add(marker)
-        }
-    }
+    // Función para actualizar la posición en el mapa
+    private fun updatePositionOnMap() {
+        // Obtener una instancia de SQLiteHelper y la lista de dispositivos con uuid y distancia
+        val dbHelper = SQLiteHelper.getInstance(this)
+        dbHelper.openDatabase()
+        deviceList = dbHelper.getAllDevicesUuidAndDistance()
 
-    private fun getMarkerIcon(context: Context): Drawable? {
-        return ContextCompat.getDrawable(context, R.drawable.ic_marker_red)
+        val estimatedPosition = calculatePosition()
+        estimatedPosition?.let {
+            // Actualizar la posición del marcador del dispositivo
+            val devicePoint = GeoPoint(it.latitude, it.longitude)
+            deviceMarker?.position = devicePoint
+            deviceMarker?.title = "Mi posición estimada"
+            mapView.invalidate() // Actualizar el mapa
+        }
     }
 
     // Función para calcular la posición relativa
@@ -104,46 +83,82 @@ class MapActivity : AppCompatActivity() {
             return null
         }
 
-        // Filtrar los datos para obtener solo las balizas con información de posición (coordenadas)
-        //val beaconsWithPosition = deviceList.filterIsInstance<BeaconWithPosition>()
-
         // Obtener las coordenadas de las balizas
         val beaconCoordinates = beaconsWithPosition.map { it.position }
 
         // Obtener las distancias desde el dispositivo hasta las balizas
-        val distances = beaconsWithPosition.map { it.distance }
+        val distances = beaconsWithPosition.map { beacon ->
+            val distance = deviceList.find { it.first == beacon.uuid }?.second
+            distance ?: beacon.distance // Usar la distancia predeterminada si no se encuentra en deviceList
+        }
+
+        // Aplicar el filtro de media móvil para suavizar las mediciones
+        val filteredDistances = applyMovingAverageFilter(distances)
 
         // Realizar la trilateración para calcular la posición relativa del dispositivo
-        return trilaterate(beaconCoordinates, distances)
+        return trilaterate(beaconCoordinates, filteredDistances)
+    }
+
+    private fun applyMovingAverageFilter(distances: List<Double>): List<Double> {
+        val windowSize = 3 // Tamaño de la ventana del filtro de media móvil
+        val filteredDistances = mutableListOf<Double>()
+
+        for (i in distances.indices) {
+            val startIndex = maxOf(0, i - windowSize + 1)
+            val endIndex = i + 1
+            val values = distances.subList(startIndex, endIndex)
+            val average = values.average()
+            filteredDistances.add(average)
+        }
+
+        return filteredDistances
     }
 
     // Función de trilateración para calcular la posición relativa
-    private fun trilaterate(beaconCoordinates: List<Coordinate>, distances: List<Double>): Position {
+    private fun trilaterate(beaconCoordinates: List<Coordinate>, distances: List<Double>): Position? {
+        if (beaconCoordinates.size != 3 || distances.size != 3) {
+            return null // Necesitamos exactamente tres balizas y tres distancias
+        }
+
+        // Coordenadas de las balizas
         val p1 = beaconCoordinates[0]
         val p2 = beaconCoordinates[1]
         val p3 = beaconCoordinates[2]
 
+        // Distancias a las balizas
         val d1 = distances[0]
         val d2 = distances[1]
         val d3 = distances[2]
 
-        // Calcula las diferencias entre los cuadrados de las coordenadas
-        val x1 = p2.latitude - p1.latitude
-        val x2 = p3.latitude - p1.latitude
-        val y1 = p2.longitude - p1.longitude
-        val y2 = p3.longitude - p1.longitude
+        // Calcular las distancias geodésicas entre las balizas y el dispositivo
+        val distanceP1 = haversine(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
+        val distanceP2 = haversine(p1.latitude, p1.longitude, p3.latitude, p3.longitude)
+        val distanceP3 = haversine(p2.latitude, p2.longitude, p3.latitude, p3.longitude)
 
-        // Calcula el coeficiente para la ecuación cuadrática
-        val a = ((d1 * d1) - (d2 * d2) + (x2 * x2) + (y2 * y2)) / 2
-        val b = ((d1 * d1) - (d3 * d3) + (x2 * x2) + (y2 * y2)) / 2
+        // Calcular la posición del dispositivo utilizando la trilateración
+        val x = (d1 * d1 - d2 * d2 + distanceP1 * distanceP1) / (2 * distanceP1)
+        val y = (d1 * d1 - d3 * d3 + distanceP2 * distanceP2 - d2 * d2 + distanceP1 * distanceP1) / (2 * distanceP1) - x * (d2 / distanceP1)
 
-        // Resuelve el sistema de ecuaciones
-        val denominator = (x1 * y2) - (x2 * y1)
+        // Calcular las coordenadas del dispositivo
+        val latitude = p1.latitude + x * (p2.latitude - p1.latitude) / distanceP1 + y * (p3.latitude - p1.latitude) / distanceP1
+        val longitude = p1.longitude + x * (p2.longitude - p1.longitude) / distanceP1 + y * (p3.longitude - p1.longitude) / distanceP1
 
-        val posX = ((a * y2) - (b * y1)) / denominator
-        val posY = ((x1 * b) - (x2 * a)) / denominator
+        // Crear y devolver la posición estimada
+        val position = Position(latitude, longitude, 0.0)
+        Log.e("Position", "Mi nueva posición es: Latitud=${position.latitude}, Longitud=${position.longitude}")
 
-        return Position(posX + p1.latitude, posY + p1.longitude, 0.0)
+        return position
+    }
+
+    private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371 // Radio de la Tierra en km
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return R * c * 1000 // Convertir a metros
     }
 }
 

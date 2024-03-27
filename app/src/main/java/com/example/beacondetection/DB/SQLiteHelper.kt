@@ -47,4 +47,8 @@ class SQLiteHelper(private val context: Context) {
         }
         return devices
     }
+
+    fun deleteDatabase() {
+        context.deleteDatabase("beacons.db")
+    }
 }

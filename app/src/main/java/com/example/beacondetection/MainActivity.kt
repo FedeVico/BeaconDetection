@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -68,6 +69,7 @@ class MainActivity : AppCompatActivity() {
             binding.scanBtn.text = resources.getString(R.string.label_scan)
             scanService.stopBLEScan(context)
             databaseHelper.closeDatabase()
+            databaseHelper.deleteDatabase()
         }
         this@MainActivity.finish()
         exitProcess(0)
@@ -109,6 +111,7 @@ class MainActivity : AppCompatActivity() {
     )
 
     // necessary permissions on Android >=12
+    @RequiresApi(Build.VERSION_CODES.S)
     private val ANDROID_12_BLE_PERMISSIONS = arrayOf(
         Manifest.permission.BLUETOOTH_SCAN,
         Manifest.permission.BLUETOOTH_CONNECT,
