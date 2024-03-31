@@ -16,6 +16,7 @@ class MapActivity : AppCompatActivity() {
     private lateinit var deviceList: ArrayList<Pair<String, Double>>
     private lateinit var mapView: MapView
     private var deviceMarker: Marker? = null // Referencia al marcador del dispositivo
+    //private var polyline: Polyline? = null // Referencia a la línea que representa el recorrido
 
     private val beaconsWithPosition = listOf(
         BeaconWithPosition("Habitación 1","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
@@ -51,12 +52,24 @@ class MapActivity : AppCompatActivity() {
         deviceMarker = Marker(mapView)
         mapView.overlays.add(deviceMarker)
 
+        /*
+        // Crear la línea del recorrido
+        polyline = Polyline()
+
+        // Añadir la polyline al overlayManager si este no es nulo
+        val overlayManager = mapView.overlayManager
+        if (overlayManager != null) {
+            overlayManager.add(polyline)
+        } else {
+            Log.e("MapActivity", "Error: overlayManager is null")
+        }*/
+
         // Iniciar un temporizador para actualizar la posición cada segundo
         Timer().scheduleAtFixedRate(timerTask {
             runOnUiThread {
                 updatePositionOnMap()
             }
-        }, 1000, 1000)
+        }, 500, 500)
     }
 
     // Función para actualizar la posición en el mapa
@@ -72,6 +85,13 @@ class MapActivity : AppCompatActivity() {
             val devicePoint = GeoPoint(it.latitude, it.longitude)
             deviceMarker?.position = devicePoint
             deviceMarker?.title = "Mi posición estimada"
+
+            /*
+            // Agregar el punto actual al recorrido si la polyline no es nula
+            polyline?.let {
+                it.addPoint(devicePoint)
+            }
+            */
             mapView.invalidate() // Actualizar el mapa
         }
     }
@@ -110,11 +130,11 @@ class MapActivity : AppCompatActivity() {
             val average = values.average()
             filteredDistances.add(average)
         }
-
         return filteredDistances
     }
 
     // Función de trilateración para calcular la posición relativa
+    // Comprobar si se podría implementar una multilateracion (mas precisa ya que disponemos de mas info inicial)
     private fun trilaterate(beaconCoordinates: List<Coordinate>, distances: List<Double>): Position? {
         if (beaconCoordinates.size != 3 || distances.size != 3) {
             return null // Necesitamos exactamente tres balizas y tres distancias
@@ -137,7 +157,8 @@ class MapActivity : AppCompatActivity() {
 
         // Calcular la posición del dispositivo utilizando la trilateración
         val x = (d1 * d1 - d2 * d2 + distanceP1 * distanceP1) / (2 * distanceP1)
-        val y = (d1 * d1 - d3 * d3 + distanceP2 * distanceP2 - d2 * d2 + distanceP1 * distanceP1) / (2 * distanceP1) - x * (d2 / distanceP1)
+        val y = ((d1 * d1 - d3 * d3 + distanceP2 * distanceP2 - d2 * d2 + distanceP1 * distanceP1) / (2 * distanceP1) -
+                x * (d2 / distanceP1)) * (distanceP3 / distanceP1)
 
         // Calcular las coordenadas del dispositivo
         val latitude = p1.latitude + x * (p2.latitude - p1.latitude) / distanceP1 + y * (p3.latitude - p1.latitude) / distanceP1
