@@ -51,6 +51,7 @@ dependencies {
     implementation("org.altbeacon:android-beacon-library:2.+")
     implementation ("org.osmdroid:osmdroid-android:6.1.14")
     implementation ("androidx.core:core-splashscreen:1.0.0-alpha01")
+    implementation ("androidx.cardview:cardview:1.0.0")
 
 
 }

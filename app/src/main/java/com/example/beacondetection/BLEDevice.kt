@@ -49,4 +49,5 @@ open class BLEDevice(scanResult: ScanResult) {
         val N = 2.0 // Factor de atenuación de la señal
         return 10.0.pow(((measuredPower - rssi) / (10 * N)))
     }
+
 }
