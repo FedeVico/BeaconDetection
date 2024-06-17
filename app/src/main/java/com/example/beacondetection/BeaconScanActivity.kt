@@ -35,13 +35,7 @@ class BeaconScanActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.scanBtn.setOnClickListener { startScan(this) }
-        binding.buttonMap.setOnClickListener {
-            openMapActivity()
-        }
-        binding.exitBtn.setOnClickListener {
-            exitApp(this)
-            databaseHelper.closeDatabase()
-        }
+
         val recycleView: RecyclerView = findViewById(R.id.deviceList)
         deviceList = ArrayList()
         this.adapter = DeviceListAdapter(this.deviceList)

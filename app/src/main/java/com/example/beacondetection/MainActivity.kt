@@ -13,6 +13,7 @@ class MainActivity : AppCompatActivity() {
 
         val btnBeaconScan = findViewById<Button>(R.id.btnBeaconScan)
         val btnMap = findViewById<Button>(R.id.btnMap)
+        val btnBeacon = findViewById<Button>(R.id.btnBeacon)
         val btnFaq = findViewById<Button>(R.id.btnFaq)
 
         btnBeaconScan.setOnClickListener {
@@ -22,6 +23,11 @@ class MainActivity : AppCompatActivity() {
 
         btnMap.setOnClickListener {
             val intent = Intent(this, MapActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnBeacon.setOnClickListener {
+            val intent = Intent(this, BeaconActivity::class.java)
             startActivity(intent)
         }
 

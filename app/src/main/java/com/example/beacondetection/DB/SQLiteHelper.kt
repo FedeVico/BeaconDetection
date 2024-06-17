@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import com.example.beacondetection.BeaconData
 import com.example.beacondetection.IBeacon
 
 class SQLiteHelper(private val context: Context) {
@@ -46,6 +47,25 @@ class SQLiteHelper(private val context: Context) {
             }
         }
         return devices
+    }
+
+    @SuppressLint("Range")
+    fun getAllBeacons(): List<BeaconData> {
+        val beacons = mutableListOf<BeaconData>()
+        val cursor: Cursor? = database.rawQuery("SELECT * FROM beacons", null)
+        cursor?.use {
+            while (it.moveToNext()) {
+                val uuid = it.getString(it.getColumnIndex("uuid"))
+                val macAddress = it.getString(it.getColumnIndex("macAddress"))
+                val major = it.getInt(it.getColumnIndex("major"))
+                val minor = it.getInt(it.getColumnIndex("minor"))
+                val rssi = it.getInt(it.getColumnIndex("rssi"))
+                val distance = it.getDouble(it.getColumnIndex("distance"))
+                val beacon = BeaconData(uuid, macAddress, major, minor, rssi, distance)
+                beacons.add(beacon)
+            }
+        }
+        return beacons
     }
 
     fun deleteDatabase() {
