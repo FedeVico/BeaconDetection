@@ -52,19 +52,7 @@ class MapActivity : AppCompatActivity() {
         deviceMarker = Marker(mapView)
         mapView.overlays.add(deviceMarker)
 
-        /*
-        // Crear la línea del recorrido
-        polyline = Polyline()
-
-        // Añadir la polyline al overlayManager si este no es nulo
-        val overlayManager = mapView.overlayManager
-        if (overlayManager != null) {
-            overlayManager.add(polyline)
-        } else {
-            Log.e("MapActivity", "Error: overlayManager is null")
-        }*/
-
-        // Iniciar un temporizador para actualizar la posición cada segundo
+        // Iniciar un temporizador para actualizar la posición cada medio segundo
         Timer().scheduleAtFixedRate(timerTask {
             runOnUiThread {
                 updatePositionOnMap()

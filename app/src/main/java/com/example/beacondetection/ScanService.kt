@@ -13,6 +13,8 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.beacondetection.BeaconEntities.BLEDevice
+import com.example.beacondetection.BeaconEntities.IBeacon
 import com.example.beacondetection.DB.SQLiteHelper
 
 class ScanService {

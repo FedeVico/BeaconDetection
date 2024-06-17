@@ -5,8 +5,10 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -15,7 +17,6 @@ import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.beacondetection.DB.SQLiteHelper
 import com.example.beacondetection.databinding.ActivityBeaconScanBinding
-import kotlin.system.exitProcess
 
 class BeaconScanActivity : AppCompatActivity() {
 
@@ -47,27 +48,6 @@ class BeaconScanActivity : AppCompatActivity() {
             // Initialize scanService here
             scanService = ScanService(this, this.deviceList, this.adapter)
         }
-    }
-
-    private fun openMapActivity() {
-        // Enviar el deviceList para hacer calculos en map
-        val intent = Intent(this@BeaconScanActivity, MapActivity::class.java)
-        startActivity(intent)
-    }
-
-    /**
-     * exit application
-     */
-    private fun exitApp(context: Context) {
-        // if scanning service is running, stop scan then exit
-        if (::scanService.isInitialized && scanService.isScanning()) {
-            binding.scanBtn.text = resources.getString(R.string.label_scan)
-            scanService.stopBLEScan(context)
-            databaseHelper.closeDatabase()
-            databaseHelper.deleteDatabase()
-        }
-        this@BeaconScanActivity.finish()
-        exitProcess(0)
     }
 
     private fun startScan(context: Context) {
@@ -121,7 +101,7 @@ class BeaconScanActivity : AppCompatActivity() {
      * @return true if user has granted permission
      */
     private fun isPermissionGranted(context: Context): Boolean {
-        Log.d(TAG, "@isPermissionGranted: checking bluetooth")
+        Log.d(TAG, "@isPermissionGranted: checking bluetooth and location")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if ((ActivityCompat.checkSelfPermission(
                     context,
@@ -130,9 +110,13 @@ class BeaconScanActivity : AppCompatActivity() {
                 (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.BLUETOOTH_SCAN
+                ) != PackageManager.PERMISSION_GRANTED) ||
+                (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED)
             ) {
-                Log.d(TAG, "@isPermissionGranted: requesting Bluetooth on Android >= 12")
+                Log.d(TAG, "@isPermissionGranted: requesting Bluetooth and Location on Android >= 12")
                 ActivityCompat.requestPermissions(this, ANDROID_12_BLE_PERMISSIONS, 2)
                 return false
             }
@@ -140,6 +124,10 @@ class BeaconScanActivity : AppCompatActivity() {
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 Log.d(TAG, "@isPermissionGranted: requesting Location on Android < 12")
@@ -147,9 +135,26 @@ class BeaconScanActivity : AppCompatActivity() {
                 return false
             }
         }
-        Log.d(TAG, "@isPermissionGranted Bluetooth permission is ON")
+
+        // Check if location is enabled
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        if (!isLocationEnabled) {
+            Log.d(TAG, "@isPermissionGranted: requesting user to enable location")
+            requestLocationEnable()
+            return false
+        }
+
+        Log.d(TAG, "@isPermissionGranted Bluetooth and Location permission is ON")
         return true
     }
+
+    private fun requestLocationEnable() {
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        startActivity(intent)
+    }
+
 
     private var requestBluetooth =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->

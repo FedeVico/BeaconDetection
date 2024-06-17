@@ -4,6 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.beacondetection.BeaconEntities.BLEDevice
+import com.example.beacondetection.BeaconEntities.IBeacon
 
 class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 

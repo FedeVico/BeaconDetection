@@ -1,4 +1,4 @@
-package com.example.beacondetection
+package com.example.beacondetection.BeaconEntities
 
 data class BeaconData(
     val uuid: String,

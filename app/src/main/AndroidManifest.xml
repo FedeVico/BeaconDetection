@@ -33,6 +33,6 @@
         <activity android:name=".BeaconScanActivity" />
         <activity android:name=".MapActivity" />
         <activity android:name=".BeaconActivity" />
-        <activity android:name=".FAQActivity" />
+        <activity android:name=".FAQ.FAQActivity" />
     </application>
 </manifest>

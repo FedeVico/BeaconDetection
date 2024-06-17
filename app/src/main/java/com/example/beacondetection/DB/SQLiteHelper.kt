@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
-import com.example.beacondetection.BeaconData
-import com.example.beacondetection.IBeacon
+import com.example.beacondetection.BeaconEntities.BeaconData
+import com.example.beacondetection.BeaconEntities.IBeacon
 
 class SQLiteHelper(private val context: Context) {
 
