@@ -1,4 +1,5 @@
 package com.example.beacondetection.Activities
+
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +10,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 import java.util.Timer
 import kotlin.concurrent.timerTask
 
@@ -17,7 +19,6 @@ class MapActivity : AppCompatActivity() {
     private lateinit var deviceList: ArrayList<Pair<String, Double>>
     private lateinit var mapView: MapView
     private var deviceMarker: Marker? = null // Referencia al marcador del dispositivo
-    //private var polyline: Polyline? = null // Referencia a la línea que representa el recorrido
 
     private val beaconsWithPosition = listOf(
         BeaconWithPosition("Habitación 1","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
@@ -28,6 +29,11 @@ class MapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
+
+        // Obtener las opciones seleccionadas
+        val showMyLocation = intent.getBooleanExtra("showMyLocation", false)
+        val showBeacons = intent.getBooleanExtra("showBeacons", false)
+        val showBoth = intent.getBooleanExtra("showBoth", false)
 
         // Obtener una instancia de SQLiteHelper
         val dbHelper = SQLiteHelper.getInstance(this)
@@ -53,12 +59,19 @@ class MapActivity : AppCompatActivity() {
         deviceMarker = Marker(mapView)
         mapView.overlays.add(deviceMarker)
 
-        // Iniciar un temporizador para actualizar la posición cada medio segundo
-        Timer().scheduleAtFixedRate(timerTask {
-            runOnUiThread {
-                updatePositionOnMap()
-            }
-        }, 500, 500)
+        // Iniciar un temporizador para actualizar la posición cada medio segundo si es necesario
+        if (showMyLocation || showBoth) {
+            Timer().scheduleAtFixedRate(timerTask {
+                runOnUiThread {
+                    updatePositionOnMap()
+                }
+            }, 500, 500)
+        }
+
+        // Mostrar balizas detectadas si es necesario
+        if (showBeacons || showBoth) {
+            showBeaconsOnMap()
+        }
     }
 
     // Función para actualizar la posición en el mapa
@@ -74,16 +87,34 @@ class MapActivity : AppCompatActivity() {
             val devicePoint = GeoPoint(it.latitude, it.longitude)
             deviceMarker?.position = devicePoint
             deviceMarker?.title = "Mi posición estimada"
-
-            /*
-            // Agregar el punto actual al recorrido si la polyline no es nula
-            polyline?.let {
-                it.addPoint(devicePoint)
-            }
-            */
             mapView.invalidate() // Actualizar el mapa
         }
     }
+
+    // Función para mostrar las balizas en el mapa
+    private fun showBeaconsOnMap() {
+        beaconsWithPosition.forEach { beacon ->
+            // Crear un círculo de 5 metros de radio alrededor del marcador de la baliza
+            val circle = Polygon(mapView)
+            circle.points = Polygon.pointsAsCircle(GeoPoint(beacon.position.latitude, beacon.position.longitude), 5.0)
+            circle.fillColor = 0x12121212 // Color de relleno con transparencia
+            circle.strokeColor = 0x12121212 // Color del borde con transparencia
+            circle.strokeWidth = 1f // Ancho del borde reducido a la mitad
+            circle.infoWindow = null // Desactivar el InfoWindow para el círculo
+            mapView.overlays.add(circle)
+
+            // Crear el marcador de la baliza
+            val beaconMarker = Marker(mapView)
+            beaconMarker.position = GeoPoint(beacon.position.latitude, beacon.position.longitude)
+            beaconMarker.title = beacon.name
+            beaconMarker.icon = resources.getDrawable(R.drawable.ic_marker_red, null) // Usar un ícono de punto rojo
+            beaconMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER) // Centrar el punto rojo
+
+            mapView.overlays.add(beaconMarker)
+        }
+        mapView.invalidate() // Actualizar el mapa
+    }
+
 
     // Función para calcular la posición relativa
     private fun calculatePosition(): Position? {
@@ -123,7 +154,6 @@ class MapActivity : AppCompatActivity() {
     }
 
     // Función de trilateración para calcular la posición relativa
-    // Comprobar si se podría implementar una multilateracion (mas precisa ya que disponemos de mas info inicial)
     private fun trilaterate(beaconCoordinates: List<Coordinate>, distances: List<Double>): Position? {
         if (beaconCoordinates.size != 3 || distances.size != 3) {
             return null // Necesitamos exactamente tres balizas y tres distancias
@@ -176,4 +206,4 @@ data class Coordinate(val latitude: Double, val longitude: Double)
 
 data class Position(val latitude: Double, val longitude: Double, val z: Double)
 
-data class BeaconWithPosition(val name:String, val uuid: String, val position: Coordinate, val distance: Double)
+data class BeaconWithPosition(val name: String, val uuid: String, val position: Coordinate, val distance: Double)

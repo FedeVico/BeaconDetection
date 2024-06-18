@@ -3,6 +3,7 @@ package com.example.beacondetection.Activities
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.beacondetection.R
 
@@ -23,8 +24,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnMap.setOnClickListener {
-            val intent = Intent(this, MapActivity::class.java)
-            startActivity(intent)
+            showMapDialog()
         }
 
         btnBeacon.setOnClickListener {
@@ -36,5 +36,26 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, FAQActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    private fun showMapDialog() {
+        val options = arrayOf("Mostrar mi ubicación", "Mostrar balizas detectadas", "Mostrar ambas")
+        val checkedItems = booleanArrayOf(false, false, false) // Inicializa todos los elementos no seleccionados
+
+        AlertDialog.Builder(this)
+            .setTitle("Elija lo que desea mostrar en el mapa")
+            .setMultiChoiceItems(options, checkedItems) { dialog, which, isChecked ->
+                checkedItems[which] = isChecked // Actualiza el estado del ítem seleccionado
+            }
+            .setPositiveButton("OK") { dialog, which ->
+                // Acción después de que el usuario presiona OK
+                val intent = Intent(this, MapActivity::class.java)
+                intent.putExtra("showMyLocation", checkedItems[0])
+                intent.putExtra("showBeacons", checkedItems[1])
+                intent.putExtra("showBoth", checkedItems[2])
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 }
