@@ -2,6 +2,9 @@ package com.example.beacondetection.Activities
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.beacondetection.DB.SQLiteHelper
 import com.example.beacondetection.R
@@ -21,9 +24,9 @@ class MapActivity : AppCompatActivity() {
     private var deviceMarker: Marker? = null // Referencia al marcador del dispositivo
 
     private val beaconsWithPosition = listOf(
-        BeaconWithPosition("Habitación 1","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
-        BeaconWithPosition("Habitación 2","22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
-        BeaconWithPosition("Habitación 3","33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
+        BeaconWithPosition("Sala de odenadores","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
+        BeaconWithPosition("Salón principal","22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
+        BeaconWithPosition("Inventario","33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +75,26 @@ class MapActivity : AppCompatActivity() {
         if (showBeacons || showBoth) {
             showBeaconsOnMap()
         }
+
+        // Configurar el cuadro de texto y el botón
+        val inputLocation = findViewById<EditText>(R.id.input_location)
+        val btnGo = findViewById<Button>(R.id.btn_go)
+
+        btnGo.setOnClickListener {
+            val location = inputLocation.text.toString()
+            if (location.isNotEmpty()) {
+                val matchedBeacon = beaconsWithPosition.find { it.name.contains(location, ignoreCase = true) }
+                if (matchedBeacon != null) {
+                    val point = GeoPoint(matchedBeacon.position.latitude, matchedBeacon.position.longitude)
+                    mapController.setCenter(point)
+                    mapController.setZoom(20.0)
+                } else {
+                    Toast.makeText(this, "No se encontró ninguna baliza con ese nombre", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Por favor, ingresa una ubicación", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     // Función para actualizar la posición en el mapa
@@ -114,7 +137,6 @@ class MapActivity : AppCompatActivity() {
         }
         mapView.invalidate() // Actualizar el mapa
     }
-
 
     // Función para calcular la posición relativa
     private fun calculatePosition(): Position? {
