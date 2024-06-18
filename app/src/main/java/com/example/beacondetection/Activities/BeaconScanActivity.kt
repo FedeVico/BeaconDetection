@@ -31,7 +31,6 @@ class BeaconScanActivity : AppCompatActivity() {
     private lateinit var deviceList: ArrayList<Any>
     private lateinit var databaseHelper: SQLiteHelper
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_BeaconDetection)
@@ -45,25 +44,21 @@ class BeaconScanActivity : AppCompatActivity() {
         this.adapter = DeviceListAdapter(this.deviceList)
         recycleView.adapter = this.adapter
 
-        // check for permission to scan BLE
-        if (isPermissionGranted(this)) {
-            Log.d(TAG, "@onCreate init scan service")
-            // Initialize scanService here
-            scanService = ScanService(this, this.deviceList, this.adapter)
-        }
+        // Initialize scanService
+        scanService = ScanService(this, this.deviceList, this.adapter)
     }
 
     private fun startScan(context: Context) {
-        // Check if scanService is initialized
-        if (::scanService.isInitialized) {
-            // check Bluetooth
+        // Check for permissions before starting the scan
+        if (isPermissionGranted(context)) {
+            // Check if Bluetooth is enabled
             if (!scanService.isBluetoothEnabled()) {
                 Log.d(TAG, "@startScan Bluetooth is disabled")
                 val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 requestBluetooth.launch(intent)
             } else {
                 scanService.initScanner()
-                // start scanning BLE device
+                // Start scanning BLE device
                 if (scanService.isScanning()) {
                     binding.scanBtn.text = resources.getString(R.string.label_scan)
                     scanService.stopBLEScan(context)
@@ -72,23 +67,16 @@ class BeaconScanActivity : AppCompatActivity() {
                     binding.scanBtn.text = resources.getString(R.string.label_scanning)
                 }
             }
-        } else {
-            Log.e(TAG, "scanService is not initialized")
         }
     }
 
-    /**
-     * Start BLE scan
-     * Check Bluetooth before scanning.
-     * If Bluetooth is disabled, request user to turn on Bluetooth
-     */
-    // necessary permissions on Android <12
+    // Necessary permissions on Android <12
     private val BLE_PERMISSIONS = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    // necessary permissions on Android >=12
+    // Necessary permissions on Android >=12
     @RequiresApi(Build.VERSION_CODES.S)
     private val ANDROID_12_BLE_PERMISSIONS = arrayOf(
         Manifest.permission.BLUETOOTH_SCAN,
@@ -96,13 +84,6 @@ class BeaconScanActivity : AppCompatActivity() {
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    /**
-     * Determine whether the location permission has been granted
-     * if not, request the permission
-     *
-     * @param context
-     * @return true if user has granted permission
-     */
     private fun isPermissionGranted(context: Context): Boolean {
         Log.d(TAG, "@isPermissionGranted: checking bluetooth and location")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -120,7 +101,7 @@ class BeaconScanActivity : AppCompatActivity() {
                 ) != PackageManager.PERMISSION_GRANTED)
             ) {
                 Log.d(TAG, "@isPermissionGranted: requesting Bluetooth and Location on Android >= 12")
-                ActivityCompat.requestPermissions(this, ANDROID_12_BLE_PERMISSIONS, 2)
+                requestPermissions(ANDROID_12_BLE_PERMISSIONS, 2)
                 return false
             }
         } else {
@@ -134,7 +115,7 @@ class BeaconScanActivity : AppCompatActivity() {
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 Log.d(TAG, "@isPermissionGranted: requesting Location on Android < 12")
-                ActivityCompat.requestPermissions(this, BLE_PERMISSIONS, 3)
+                requestPermissions(BLE_PERMISSIONS, 3)
                 return false
             }
         }
@@ -158,7 +139,6 @@ class BeaconScanActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-
     private var requestBluetooth =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
@@ -167,4 +147,17 @@ class BeaconScanActivity : AppCompatActivity() {
                 Log.d(TAG, "@requestBluetooth Bluetooth usage is denied")
             }
         }
+
+    // Handle the result of the permission request
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 2 || requestCode == 3) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                Log.d(TAG, "All permissions granted")
+                startScan(this)
+            } else {
+                Log.d(TAG, "Permissions denied")
+            }
+        }
+    }
 }
