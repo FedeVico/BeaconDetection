@@ -20,9 +20,11 @@ class BeaconAdapter(private val beacons: List<BeaconData>) : RecyclerView.Adapte
         holder.uuid.text = "UUID: ${beacon.uuid}"
         holder.major.text = "Major: ${beacon.major}"
         holder.minor.text = "Minor: ${beacon.minor}"
-        holder.address.text = "Address: ${beacon.macAddress}"
+        holder.address.text = "Dirección: ${beacon.macAddress}"
         holder.rssi.text = "RSSI: ${beacon.rssi}"
-        holder.distance.text = "Distance: ${beacon.distance}"
+        holder.distance.text = "Distancia: ${beacon.distance}"
+        holder.timestamp.text = "Fecha: ${beacon.timestamp}"
+
     }
 
     override fun getItemCount(): Int {
@@ -36,5 +38,6 @@ class BeaconAdapter(private val beacons: List<BeaconData>) : RecyclerView.Adapte
         val address: TextView = itemView.findViewById(R.id.text_address_value)
         val rssi: TextView = itemView.findViewById(R.id.text_rssi_value)
         val distance: TextView = itemView.findViewById(R.id.text_distance_value)
+        val timestamp: TextView = itemView.findViewById(R.id.text_timestamp_value)
     }
 }

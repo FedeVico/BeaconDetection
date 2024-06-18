@@ -2,18 +2,19 @@
     <string name="app_name">GoInside</string>
     <string name="log_ble_device">Device Name: %1$s rssi: %2$d</string>
     <string name="label_scan">Escanear</string>
-    <string name="label_scanning">Scanning</string>>
-    <string name="label_all">All</string>
-    <string name="label_BLE_device">BLE device</string>
+    <string name="label_scanning">Escaneando</string>>
+    <string name="label_all">Todos</string>
+    <string name="label_BLE_device">Dispositivo BLE</string>
     <string name="label_ibeacon">iBeacon</string>
-    <string name="label_exit">Exit</string>
-    <string name="label_name">Name</string>
-    <string name="label_address">Address</string>
+    <string name="label_exit">Salir</string>
+    <string name="label_name">Nombre</string>
+    <string name="label_address">Dirección</string>
     <string name="label_uuid">UUID</string>
     <string name="label_major">Major</string>
     <string name="label_minor">Minor</string>
     <string name="label_rssi">RSSI</string>
-    <string name="label_distance">Distance</string>
+    <string name="label_distance">Distancia</string>
     <string name="label_map">Ver mapa</string>
+    <string name="fecha">Fecha</string>
 
 </resources>

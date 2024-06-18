@@ -23,17 +23,31 @@ class SQLiteHelper(private val context: Context) {
     private val database: SQLiteDatabase by lazy { context.openOrCreateDatabase("beacons.db", Context.MODE_PRIVATE, null) }
 
     fun openDatabase() {
-        database.execSQL("CREATE TABLE IF NOT EXISTS beacons (uuid TEXT PRIMARY KEY, macAddress TEXT, major INTEGER, minor INTEGER, rssi INTEGER, distance REAL)") // Cambios aquí
+        database.execSQL("""
+        CREATE TABLE IF NOT EXISTS beacons (
+            uuid TEXT PRIMARY KEY, 
+            macAddress TEXT, 
+            major INTEGER, 
+            minor INTEGER, 
+            rssi INTEGER, 
+            distance REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     }
+
 
     fun closeDatabase() {
         database.close()
     }
 
     fun insertOrUpdateDevice(beacon: IBeacon) {
-        database.execSQL("INSERT OR REPLACE INTO beacons (uuid, macAddress, major, minor, rssi, distance) VALUES (?, ?, ?, ?, ?, ?)",
-            arrayOf(beacon.getUUID(), beacon.getAddress(), beacon.getMajor(), beacon.getMinor(), beacon.getRssi(), beacon.getDistance()))
+        database.execSQL("""
+        INSERT OR REPLACE INTO beacons (uuid, macAddress, major, minor, rssi, distance, timestamp) 
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    """, arrayOf(beacon.getUUID(), beacon.getAddress(), beacon.getMajor(), beacon.getMinor(), beacon.getRssi(), beacon.getDistance()))
     }
+
 
     @SuppressLint("Range")
     fun getAllDevicesUuidAndDistance(): ArrayList<Pair<String, Double>> {
@@ -61,12 +75,14 @@ class SQLiteHelper(private val context: Context) {
                 val minor = it.getInt(it.getColumnIndex("minor"))
                 val rssi = it.getInt(it.getColumnIndex("rssi"))
                 val distance = it.getDouble(it.getColumnIndex("distance"))
-                val beacon = BeaconData(uuid, macAddress, major, minor, rssi, distance)
+                val timestamp = it.getString(it.getColumnIndex("timestamp"))
+                val beacon = BeaconData(uuid, macAddress, major, minor, rssi, distance, timestamp)
                 beacons.add(beacon)
             }
         }
         return beacons
     }
+
 
     fun deleteDatabase() {
         context.deleteDatabase("beacons.db")

@@ -6,5 +6,7 @@ data class BeaconData(
     val major: Int,
     val minor: Int,
     val rssi: Int,
-    val distance: Double
+    val distance: Double,
+    val timestamp: String
 )
+
