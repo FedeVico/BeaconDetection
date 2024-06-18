@@ -1,10 +1,12 @@
-package com.example.beacondetection
+package com.example.beacondetection.Activities
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.beacondetection.Adapters.BeaconAdapter
 import com.example.beacondetection.DB.SQLiteHelper
+import com.example.beacondetection.R
 
 class BeaconActivity : AppCompatActivity() {
 

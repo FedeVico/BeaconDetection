@@ -1,10 +1,10 @@
-package com.example.beacondetection
+package com.example.beacondetection.Activities
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import com.example.beacondetection.FAQ.FAQActivity
+import com.example.beacondetection.R
 
 class MainActivity : AppCompatActivity() {
 

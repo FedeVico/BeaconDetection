@@ -1,4 +1,4 @@
-package com.example.beacondetection.FAQ
+package com.example.beacondetection.Adapters
 
 import android.content.Context
 import android.view.LayoutInflater

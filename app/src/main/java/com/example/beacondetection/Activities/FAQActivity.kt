@@ -1,8 +1,9 @@
-package com.example.beacondetection.FAQ
+package com.example.beacondetection.Activities
 
 import android.os.Bundle
 import android.widget.ExpandableListView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.beacondetection.Adapters.FAQAdapter
 import com.example.beacondetection.R
 
 class FAQActivity : AppCompatActivity() {

@@ -1,8 +1,9 @@
-package com.example.beacondetection
+package com.example.beacondetection.Activities
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.example.beacondetection.DB.SQLiteHelper
+import com.example.beacondetection.R
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint

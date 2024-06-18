@@ -1,4 +1,4 @@
-package com.example.beacondetection
+package com.example.beacondetection.Adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.beacondetection.BeaconEntities.BeaconData
+import com.example.beacondetection.R
 
 class BeaconAdapter(private val beacons: List<BeaconData>) : RecyclerView.Adapter<BeaconAdapter.BeaconViewHolder>() {
 

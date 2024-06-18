@@ -23,16 +23,16 @@
         android:theme="@style/splashScreenTheme"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".Activities.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".BeaconScanActivity" />
-        <activity android:name=".MapActivity" />
-        <activity android:name=".BeaconActivity" />
-        <activity android:name=".FAQ.FAQActivity" />
+        <activity android:name=".Activities.BeaconScanActivity" />
+        <activity android:name=".Activities.MapActivity" />
+        <activity android:name=".Activities.BeaconActivity" />
+        <activity android:name=".Activities.FAQActivity" />
     </application>
 </manifest>
