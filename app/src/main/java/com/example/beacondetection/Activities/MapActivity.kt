@@ -151,7 +151,7 @@ class MapActivity : AppCompatActivity() {
             val devicePoint = GeoPoint(it.latitude, it.longitude)
             deviceMarker?.position = devicePoint
             deviceMarker?.title = "Mi posición estimada"
-            mapView.invalidate() // Actualizar el mapa
+            mapView.invalidate()
         } ?: run {
             Log.d("MapActivity", "Unable to estimate position.")
         }
@@ -159,26 +159,17 @@ class MapActivity : AppCompatActivity() {
 
     // Función para calcular la posición relativa
     private fun calculatePosition(): Position? {
-        Log.d("MapActivity", "Calculating position...")
-
         if (deviceList.size < 3) {
             Log.d("MapActivity", "Not enough beacons for trilateration. Need at least 3.")
             return null
         }
-
-        // Filtrar las balizas detectadas para que solo queden aquellas cuya posición conocemos
         val knownBeacons = deviceList.filter { (uuid, _) ->
             beaconsWithPosition.any { it.uuid == uuid }
         }
-
         if (knownBeacons.size < 3) {
-            Log.d("MapActivity", "Not enough known beacons for trilateration. Need at least 3.")
             return null
         }
-
-        // Ordenar las balizas conocidas por distancia y tomar las tres más cercanas
         val closestBeacons = knownBeacons.sortedBy { it.second }.take(3)
-
         val beaconCoordinates = mutableListOf<Coordinate>()
         val distances = mutableListOf<Double>()
 
@@ -189,22 +180,17 @@ class MapActivity : AppCompatActivity() {
                 distances.add(distance)
             }
         }
-
         if (beaconCoordinates.size < 3) {
-            Log.d("MapActivity", "Not enough valid beacon coordinates.")
             return null
         }
 
-        // Aplicar el filtro de media móvil para suavizar las mediciones
         val filteredDistances = applyMovingAverageFilter(distances)
-
-        // Realizar la trilateración para calcular la posición relativa del dispositivo
         return trilaterate(beaconCoordinates, filteredDistances)
     }
 
 
     private fun applyMovingAverageFilter(distances: List<Double>): List<Double> {
-        val windowSize = 3 // Tamaño de la ventana del filtro de media móvil
+        val windowSize = 3
         val filteredDistances = mutableListOf<Double>()
 
         for (i in distances.indices) {
@@ -219,8 +205,6 @@ class MapActivity : AppCompatActivity() {
 
     // Función de trilateración para calcular la posición relativa
     private fun trilaterate(beaconCoordinates: List<Coordinate>, distances: List<Double>): Position? {
-        Log.d("MapActivity", "Performing trilateration...")
-
         if (beaconCoordinates.size != 3 || distances.size != 3) {
             return null
         }
@@ -234,8 +218,6 @@ class MapActivity : AppCompatActivity() {
         val d1 = distances[0]
         val d2 = distances[1]
         val d3 = distances[2]
-
-        Log.d("MapActivity", "Using beacons at: $p1, $p2, $p3 with distances: $d1, $d2, $d3")
 
         // Calcular las distancias geodésicas entre las balizas y el dispositivo
         val distanceP1 = haversine(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
