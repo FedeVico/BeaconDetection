@@ -27,27 +27,36 @@ open class BLEDevice(scanResult: ScanResult) {
      */
     private var name: String = ""
 
-
+    private var rssiList: MutableList<Int> = mutableListOf()
+    private val rssiListSize = 5 // Tamaño del historial de lecturas de RSSI
     init {
         if (scanResult.device.name != null) {
             name = scanResult.device.name
         }
         address = scanResult.device.address
-        rssi = scanResult.rssi
+        rssiList.add(scanResult.rssi)
     }
 
     fun getAddress(): String {
         return address
     }
 
+    fun addRssi(rssi: Int) {
+        if (rssiList.size >= rssiListSize) {
+            rssiList.removeAt(0)
+        }
+        rssiList.add(rssi)
+    }
+
     fun getRssi(): Int {
-        return rssi
+        return rssiList.average().toInt()
     }
 
     fun getDistance(): Double {
         val measuredPower = -59 // Potencia medida en dBm a 1 metro de distancia
         val N = 2.0 // Factor de atenuación de la señal
-        return 10.0.pow(((measuredPower - rssi) / (10 * N)))
+        val averageRssi = rssiList.average()
+        return 10.0.pow(((measuredPower - averageRssi) / (10 * N)))
     }
 
 }

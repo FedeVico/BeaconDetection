@@ -127,6 +127,7 @@ class ScanService {
                                 if (idx == -1) {
                                     deviceList.add(iBeacon)
                                 } else {
+                                    (deviceList[idx] as IBeacon).addRssi(result.rssi)
                                     deviceList[idx] = iBeacon
                                 }
                                 val currentInRange = distance < 5
@@ -145,6 +146,7 @@ class ScanService {
                                     // Desactivo las BLE temporalmente
                                     //deviceList.add(ble)
                                 } else {
+                                    (deviceList[idx] as BLEDevice).addRssi(result.rssi)
                                     deviceList[idx] = ble
                                 }
                                 // Insertar el dispositivo BLE en la base de datos
@@ -164,6 +166,7 @@ class ScanService {
             }
         }
     }
+
 
     // Funciones para insertar en la base de datos (modifica según tu estructura)
     private fun insertBeacon(beacon: IBeacon) {
