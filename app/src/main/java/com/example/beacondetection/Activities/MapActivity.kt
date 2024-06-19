@@ -24,7 +24,7 @@ class MapActivity : AppCompatActivity() {
     private var deviceMarker: Marker? = null // Referencia al marcador del dispositivo
 
     private val beaconsWithPosition = listOf(
-        BeaconWithPosition("Sala de odenadores","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
+        BeaconWithPosition("Sala de ordenadores","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
         BeaconWithPosition("Salón principal","22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
         BeaconWithPosition("Inventario","33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
     )

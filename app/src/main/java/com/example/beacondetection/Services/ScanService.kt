@@ -134,8 +134,6 @@ class ScanService {
                                 if (currentInRange != previousInRange) {
                                     if (currentInRange) {
                                         showNotification(context, "Has entrado en el radio de ${iBeacon.uuid}")
-                                    } else {
-                                        showNotification(context, "Has salido del radio de ${iBeacon.uuid}")
                                     }
                                     beaconStates[iBeacon.getAddress()] = currentInRange
                                 }
