@@ -8,7 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.beacondetection.DB.SQLiteHelper
+import com.example.beacondetection.DB.FirestoreHelper
 import com.example.beacondetection.R
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -40,9 +40,8 @@ class MapActivity : AppCompatActivity() {
         val showBeacons = intent.getBooleanExtra("showBeacons", false)
         val showBoth = intent.getBooleanExtra("showBoth", false)
 
-        // Obtener una instancia de SQLiteHelper
-        val dbHelper = SQLiteHelper.getInstance(this)
-        dbHelper.openDatabase()
+        // Obtener una instancia de FirestoreHelper
+        val dbHelper = FirestoreHelper.getInstance(this)
 
         // Configurar el agente de usuario
         val userAgentValue = "BeaconDetection"
@@ -138,22 +137,22 @@ class MapActivity : AppCompatActivity() {
 
     // Función para actualizar la posición en el mapa
     private fun updatePositionOnMap() {
-        // Obtener una instancia de SQLiteHelper y la lista de dispositivos con uuid y distancia
-        val dbHelper = SQLiteHelper.getInstance(this)
-        dbHelper.openDatabase()
-        deviceList = dbHelper.getAllDevicesUuidAndDistance()
+        // Obtener una instancia de FirestoreHelper y la lista de dispositivos con uuid y distancia
+        val dbHelper = FirestoreHelper.getInstance(this)
+        dbHelper.getAllDevicesUuidAndDistance { devices ->
+            deviceList = devices
+            val estimatedPosition = calculatePosition()
+            estimatedPosition?.let {
+                Log.d("MapActivity", "Estimated position: Latitude=${it.latitude}, Longitude=${it.longitude}")
 
-        val estimatedPosition = calculatePosition()
-        estimatedPosition?.let {
-            Log.d("MapActivity", "Estimated position: Latitude=${it.latitude}, Longitude=${it.longitude}")
-
-            // Actualizar la posición del marcador del dispositivo
-            val devicePoint = GeoPoint(it.latitude, it.longitude)
-            deviceMarker?.position = devicePoint
-            deviceMarker?.title = "Mi posición estimada"
-            mapView.invalidate()
-        } ?: run {
-            Log.d("MapActivity", "Unable to estimate position.")
+                // Actualizar la posición del marcador del dispositivo
+                val devicePoint = GeoPoint(it.latitude, it.longitude)
+                deviceMarker?.position = devicePoint
+                deviceMarker?.title = "Mi posición estimada"
+                mapView.invalidate()
+            } ?: run {
+                Log.d("MapActivity", "Unable to estimate position.")
+            }
         }
     }
 

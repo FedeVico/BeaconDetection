@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.beacondetection.Adapters.DeviceListAdapter
-import com.example.beacondetection.DB.SQLiteHelper
+import com.example.beacondetection.DB.FirestoreHelper
 import com.example.beacondetection.R
 import com.example.beacondetection.Services.ScanService
 import com.example.beacondetection.databinding.ActivityBeaconScanBinding
@@ -29,7 +29,7 @@ class BeaconScanActivity : AppCompatActivity() {
     private lateinit var scanService: ScanService
     private lateinit var adapter: DeviceListAdapter
     private lateinit var deviceList: ArrayList<Any>
-    private lateinit var databaseHelper: SQLiteHelper
+    private lateinit var firestoreHelper: FirestoreHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +46,9 @@ class BeaconScanActivity : AppCompatActivity() {
 
         // Initialize scanService
         scanService = ScanService(this, this.deviceList, this.adapter)
+
+        // Initialize FirestoreHelper
+        firestoreHelper = FirestoreHelper.getInstance(this)
     }
 
     private fun startScan(context: Context) {

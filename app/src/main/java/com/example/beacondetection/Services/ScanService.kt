@@ -16,7 +16,7 @@ import androidx.core.app.NotificationCompat
 import com.example.beacondetection.Adapters.DeviceListAdapter
 import com.example.beacondetection.BeaconEntities.BLEDevice
 import com.example.beacondetection.BeaconEntities.IBeacon
-import com.example.beacondetection.DB.SQLiteHelper
+import com.example.beacondetection.DB.FirestoreHelper
 import com.example.beacondetection.R
 
 class ScanService {
@@ -35,13 +35,12 @@ class ScanService {
     private lateinit var deviceList: ArrayList<Any>
     private lateinit var adapter: DeviceListAdapter
 
-    private lateinit var databaseHelper: SQLiteHelper
+    private lateinit var firestoreHelper: FirestoreHelper
 
     constructor(context: Context, deviceList: ArrayList<Any>, adapter: DeviceListAdapter) {
         this.deviceList = deviceList
 
-        databaseHelper = SQLiteHelper.getInstance(context)
-        databaseHelper.openDatabase()
+        firestoreHelper = FirestoreHelper.getInstance(context)
 
         builder = ScanSettings.Builder()
         builder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -138,6 +137,21 @@ class ScanService {
                                     }
                                     beaconStates[iBeacon.getAddress()] = currentInRange
                                 }
+
+                                // Contar el número de dispositivos dentro del rango de 5 metros
+                                val numDevices = deviceList.count {
+                                    (it as IBeacon).getUUID() == iBeacon.getUUID() &&
+                                            it.getDistance() < 5
+                                }
+                                updateNumDevices(context, iBeacon.getUUID(), numDevices)
+
+                                // Insertar la interacción del dispositivo con la baliza
+                                FirestoreHelper.getInstance(context).insertDeviceInteraction(
+                                    iBeacon.getUUID(),
+                                    iBeacon.getAddress(),
+                                    distance
+                                )
+
                                 adapter.notifyDataSetChanged()
                             } else {
                                 val ble = BLEDevice(result)
@@ -167,14 +181,28 @@ class ScanService {
         }
     }
 
+    private fun updateNumDevices(context: Context, uuid: String, count: Int) {
+        FirestoreHelper.getInstance(context).db.collection("beacons")
+            .document(uuid)
+            .update("numDevices", count)
+            .addOnSuccessListener {
+                Log.d(TAG, "Updated numDevices for beacon $uuid to $count")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to update numDevices for beacon $uuid", e)
+            }
+    }
+
+
 
     // Funciones para insertar en la base de datos (modifica según tu estructura)
     private fun insertBeacon(beacon: IBeacon) {
-        databaseHelper.insertOrUpdateDevice(beacon)
+        firestoreHelper.insertOrUpdateDevice(beacon)
     }
+
     /*private fun insertBLEDevice(device: BLEDevice) {
-                databaseHelper.insertDevice(device)
-            }*/
+        firestoreHelper.insertDevice(device)
+    }*/
 
     // Función auxiliar para mostrar notificaciones
     private fun showNotification(context: Context, message: String) {
@@ -204,7 +232,7 @@ class ScanService {
      * @return -1 if doesn't exist
      */
     fun checkDeviceExists(result: ScanResult): Int {
-        val indexQuery = deviceList.indexOfFirst { (it as BLEDevice) .getAddress() == result.device.address }
+        val indexQuery = deviceList.indexOfFirst { (it as BLEDevice).getAddress() == result.device.address }
         return indexQuery
     }
 
