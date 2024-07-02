@@ -52,11 +52,21 @@ open class BLEDevice(scanResult: ScanResult) {
         return rssiList.average().toInt()
     }
 
-    fun getDistance(): Double {
+    fun getDistance1(): Double {
         val measuredPower = -59 // Potencia medida en dBm a 1 metro de distancia
         val N = 2.0 // Factor de atenuación de la señal
         val averageRssi = rssiList.average()
         return 10.0.pow(((measuredPower - averageRssi) / (10 * N)))
     }
+    fun getDistance(): Double {
+        val A = 1.203420305
+        val B = 6.170094565
+        val C = -0.203420305
+        val measuredPower = -53 // Potencia medida en dBm a 1 metro de distancia
+        val ratio = rssiList.average() / measuredPower
+        val predictedDistance = Math.exp(A) * Math.pow(ratio, B) + C
+        return predictedDistance
+    }
+
 
 }
