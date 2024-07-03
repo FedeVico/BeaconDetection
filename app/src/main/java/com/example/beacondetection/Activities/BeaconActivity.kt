@@ -1,4 +1,5 @@
 package com.example.beacondetection.Activities
+
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -20,6 +21,7 @@ class BeaconActivity : AppCompatActivity() {
     private lateinit var inputSearchUuid: EditText
     private lateinit var btnSearch: Button
     private val firestore = FirebaseFirestore.getInstance()
+    private val beaconList = mutableListOf<BeaconData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +33,9 @@ class BeaconActivity : AppCompatActivity() {
         inputSearchUuid = findViewById(R.id.input_search_uuid)
         btnSearch = findViewById(R.id.btn_search)
         databaseHelper = FirestoreHelper(this)
+
+        adapter = BeaconAdapter(beaconList)
+        recyclerView.adapter = adapter
 
         btnSearch.setOnClickListener {
             val uuid = inputSearchUuid.text.toString().trim()
@@ -50,13 +55,14 @@ class BeaconActivity : AppCompatActivity() {
             .endAt(uuid + '\uf8ff')
             .get()
             .addOnSuccessListener { documents ->
-                val beaconList = mutableListOf<BeaconData>()
+                beaconList.clear()
                 for (document in documents) {
                     val beacon = document.toObject(BeaconData::class.java)
-                    beaconList.add(beacon)
+                    updateBeaconNumDevices(beacon) { updatedBeacon ->
+                        beaconList.add(updatedBeacon)
+                        adapter.notifyDataSetChanged()
+                    }
                 }
-                adapter = BeaconAdapter(beaconList)
-                recyclerView.adapter = adapter
             }
             .addOnFailureListener { exception ->
                 Log.w("BeaconActivity", "Error getting documents: ", exception)
@@ -68,16 +74,24 @@ class BeaconActivity : AppCompatActivity() {
         firestore.collection("beacons")
             .get()
             .addOnSuccessListener { documents ->
-                val beaconList = mutableListOf<BeaconData>()
+                beaconList.clear()
                 for (document in documents) {
                     val beacon = document.toObject(BeaconData::class.java)
-                    beaconList.add(beacon)
+                    updateBeaconNumDevices(beacon) { updatedBeacon ->
+                        beaconList.add(updatedBeacon)
+                        adapter.notifyDataSetChanged()
+                    }
                 }
-                adapter = BeaconAdapter(beaconList)
-                recyclerView.adapter = adapter
             }
             .addOnFailureListener { exception ->
                 Log.w("BeaconActivity", "Error getting documents: ", exception)
             }
+    }
+
+    private fun updateBeaconNumDevices(beacon: BeaconData, callback: (BeaconData) -> Unit) {
+        FirestoreHelper.getInstance(this).countDevicesInRange(beacon.uuid) { count ->
+            val updatedBeacon = beacon.copy(numDevices = count)
+            callback(updatedBeacon)
+        }
     }
 }

@@ -104,7 +104,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/text_timestamp_value"
         android:layout_marginTop="10dp"
-        android:text="Número de dispositivos:"
+        android:text="Número de interacciones:"
         android:textStyle="bold"
         android:textColor="@android:color/black" />
     <TextView

@@ -1,11 +1,14 @@
 package com.example.beacondetection.Activities
 
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.beacondetection.DB.FirestoreHelper
@@ -24,6 +27,9 @@ class MapActivity : AppCompatActivity() {
     private lateinit var deviceList: ArrayList<Pair<String, Double>>
     private lateinit var mapView: MapView
     private var deviceMarker: Marker? = null // Referencia al marcador del dispositivo
+    private var selectedBeacon: BeaconWithPosition? = null
+    private lateinit var directionTextView: TextView // Añadir esta línea
+    private var hasArrived = false
 
     private val beaconsWithPosition = listOf(
         BeaconWithPosition("Sala de ordenadores","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
@@ -34,6 +40,8 @@ class MapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
+
+        directionTextView = findViewById(R.id.directionTextView)
 
         // Obtener las opciones seleccionadas
         val showMyLocation = intent.getBooleanExtra("showMyLocation", false)
@@ -80,25 +88,33 @@ class MapActivity : AppCompatActivity() {
         // Configurar el cuadro de texto y el botón
         val inputLocation = findViewById<EditText>(R.id.input_location)
         val btnGo = findViewById<Button>(R.id.btn_go)
-
         btnGo.setOnClickListener {
             val location = inputLocation.text.toString()
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(inputLocation.windowToken, 0)
 
             if (location.isNotEmpty()) {
-                val matchedBeacon = beaconsWithPosition.find { it.name.contains(location, ignoreCase = true) }
+                val matchedBeacon =
+                    beaconsWithPosition.find { it.name.contains(location, ignoreCase = true) }
                 if (matchedBeacon != null) {
-                    val point = GeoPoint(matchedBeacon.position.latitude, matchedBeacon.position.longitude)
+                    val point =
+                        GeoPoint(matchedBeacon.position.latitude, matchedBeacon.position.longitude)
                     mapController.setCenter(point)
                     mapController.setZoom(22.0)
+
+                    // Guardar la baliza seleccionada
+                    selectedBeacon = matchedBeacon
 
                     // Mostrar información de la baliza en el marcador existente
                     showBeaconInfo(matchedBeacon.uuid)
 
                     mapView.invalidate()
                 } else {
-                    Toast.makeText(this, "No se encontró ninguna baliza con ese nombre", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "No se encontró ninguna baliza con ese nombre",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } else {
                 Toast.makeText(this, "Por favor, ingresa una ubicación", Toast.LENGTH_SHORT).show()
@@ -137,7 +153,6 @@ class MapActivity : AppCompatActivity() {
 
     // Función para actualizar la posición en el mapa
     private fun updatePositionOnMap() {
-        // Obtener una instancia de FirestoreHelper y la lista de dispositivos con uuid y distancia
         val dbHelper = FirestoreHelper.getInstance(this)
         dbHelper.getAllDevicesUuidAndDistance { devices ->
             deviceList = devices
@@ -150,11 +165,49 @@ class MapActivity : AppCompatActivity() {
                 deviceMarker?.position = devicePoint
                 deviceMarker?.title = "Mi posición estimada"
                 mapView.invalidate()
+
+                // Calcular y mostrar la dirección hacia la baliza seleccionada
+                selectedBeacon?.let { beacon ->
+                    val distanceToBeacon = devices.find { it.first == beacon.uuid }?.second ?: Double.MAX_VALUE
+                    Log.d("MapActivity", "Distance to beacon: $distanceToBeacon")
+                    if (distanceToBeacon < 5.0 && !hasArrived) {
+                        showArrivalPopup()
+                        directionTextView.visibility = View.GONE
+                        hasArrived = true // Marcar como que ya ha llegado
+                    } else if (distanceToBeacon >= 5.0) {
+                        val direction = calculateDirectionToBeacon(it, beacon.position)
+                        directionTextView.text = direction
+                        directionTextView.visibility = View.VISIBLE
+                        hasArrived = false // Resetear la bandera si está fuera del rango
+                    }
+                }
             } ?: run {
                 Log.d("MapActivity", "Unable to estimate position.")
             }
         }
     }
+
+    private fun showArrivalPopup() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("¡Has llegado!")
+        builder.setMessage("Estás a menos de 5 metros de la baliza.")
+        builder.setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    private fun calculateDirectionToBeacon(userPosition: Position, beaconPosition: Coordinate): String {
+        val deltaX = beaconPosition.longitude - userPosition.longitude
+        val deltaY = beaconPosition.latitude - userPosition.latitude
+        val angle = Math.toDegrees(Math.atan2(deltaY, deltaX))
+        return when {
+            angle >= -45 && angle <= 45 -> "Camina hacia adelante"
+            angle > 45 && angle < 135 -> "Camina hacia la derecha"
+            angle >= 135 || angle <= -135 -> "Camina hacia atrás"
+            else -> "Camina hacia la izquierda"
+        }
+    }
+
 
     // Función para calcular la posición relativa
     private fun calculatePosition(): Position? {

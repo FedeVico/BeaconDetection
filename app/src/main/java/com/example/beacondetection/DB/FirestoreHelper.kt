@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.beacondetection.BeaconEntities.BeaconData
 import com.example.beacondetection.BeaconEntities.IBeacon
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,35 +107,79 @@ class FirestoreHelper(private val context: Context) {
         }
     }
 
-    fun countDevicesForBeacon(uuid: String, callback: (Int) -> Unit) {
+    fun countDevicesInRange(uuid: String, callback: (Int) -> Unit) {
+        val currentTime = Date()
+        val oneHourAgo = Date(currentTime.time - 3600000) // 1 hour in milliseconds
+
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        val oneHourAgoString = dateFormat.format(oneHourAgo)
+
         db.collection("deviceInteractions")
             .whereEqualTo("beaconUuid", uuid)
+            .whereGreaterThan("timestamp", oneHourAgoString)
             .get()
             .addOnSuccessListener { result ->
-                callback(result.size())
+                val uniqueDevices = result.documents
+                    .mapNotNull { it.getString("deviceMacAddress") }
+                    .distinct() // Use distinct to get unique deviceMacAddress
+                    .count()
+                callback(uniqueDevices)
             }
             .addOnFailureListener { e ->
                 callback(0)
             }
     }
 
-    fun insertDeviceInteraction(uuid: String, macAddress: String, distance: Double) {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-        val timestampString = dateFormat.format(Date())
-        val interactionData = hashMapOf(
-            "beaconUuid" to uuid,
-            "deviceMacAddress" to macAddress,
-            "distance" to distance,
-            "timestamp" to timestampString // Use Timestamp to store date and time
-        )
 
-        db.collection("deviceInteractions")
-            .add(interactionData)
-            .addOnSuccessListener {
-                Log.d(TAG, "Interaction data added successfully")
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Failed to add interaction data", e)
-            }
+
+
+    fun insertDeviceInteraction(uuid: String, macAddress: String, distance: Double) {
+        if (distance < 5.0) { // Check if the distance is less than 5 meters
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+            val currentTime = Date()
+            val timestampString = dateFormat.format(currentTime)
+
+            // Check the last interaction time
+            db.collection("deviceInteractions")
+                .whereEqualTo("beaconUuid", uuid)
+                .whereEqualTo("deviceMacAddress", macAddress)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnSuccessListener { documents ->
+                    val shouldInsert = if (documents.isEmpty) {
+                        true
+                    } else {
+                        val lastInteraction = documents.first().getString("timestamp")
+                        val lastInteractionDate = dateFormat.parse(lastInteraction)
+                        val difference = currentTime.time - lastInteractionDate.time
+                        difference > 10000
+                    }
+
+                    if (shouldInsert) {
+                        val interactionData = hashMapOf(
+                            "beaconUuid" to uuid,
+                            "deviceMacAddress" to macAddress,
+                            "distance" to distance,
+                            "timestamp" to timestampString
+                        )
+
+                        db.collection("deviceInteractions")
+                            .add(interactionData)
+                            .addOnSuccessListener {
+                                Log.d(TAG, "Interaction data added successfully")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "Failed to add interaction data", e)
+                            }
+                    } else {
+                        Log.d(TAG, "Interaction within cooldown period, not adding new record for beacon $uuid and device $macAddress")
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error checking for existing interaction", e)
+                }
+        }
     }
+
 }

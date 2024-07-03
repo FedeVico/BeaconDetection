@@ -138,19 +138,17 @@ class ScanService {
                                     beaconStates[iBeacon.getAddress()] = currentInRange
                                 }
 
-                                // Contar el número de dispositivos dentro del rango de 5 metros
-                                val numDevices = deviceList.count {
-                                    (it as IBeacon).getUUID() == iBeacon.getUUID() &&
-                                            it.getDistance() < 5
-                                }
-                                updateNumDevices(context, iBeacon.getUUID(), numDevices)
-
                                 // Insertar la interacción del dispositivo con la baliza
                                 FirestoreHelper.getInstance(context).insertDeviceInteraction(
                                     iBeacon.getUUID(),
                                     iBeacon.getAddress(),
                                     distance
                                 )
+
+                                // Contar el número de dispositivos únicos dentro del rango de 5 metros
+                                FirestoreHelper.getInstance(context).countDevicesInRange(iBeacon.getUUID()) { numDevices ->
+                                    updateNumDevices(context, iBeacon.getUUID(), numDevices)
+                                }
 
                                 adapter.notifyDataSetChanged()
                             } else {
@@ -180,6 +178,7 @@ class ScanService {
             }
         }
     }
+
 
     private fun updateNumDevices(context: Context, uuid: String, count: Int) {
         FirestoreHelper.getInstance(context).db.collection("beacons")
