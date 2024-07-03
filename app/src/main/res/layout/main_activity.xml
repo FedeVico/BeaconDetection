@@ -168,4 +168,17 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
+    <Button
+        android:id="@+id/btnStopAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Salir"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/button_background"
+        android:textColor="@color/buttonText"
+        android:padding="10dp"
+        app:layout_constraintTop_toBottomOf="@id/cardFaq"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
 </androidx.constraintlayout.widget.ConstraintLayout>

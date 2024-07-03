@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.beacondetection.R
+import org.altbeacon.beacon.service.BeaconService
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,6 +18,7 @@ class MainActivity : AppCompatActivity() {
         val btnMap = findViewById<Button>(R.id.btnMap)
         val btnBeacon = findViewById<Button>(R.id.btnBeacon)
         val btnFaq = findViewById<Button>(R.id.btnFaq)
+        val btnStopAll = findViewById<Button>(R.id.btnStopAll) // Button to stop all subprocesses
 
         btnBeaconScan.setOnClickListener {
             val intent = Intent(this, BeaconScanActivity::class.java)
@@ -35,6 +37,10 @@ class MainActivity : AppCompatActivity() {
         btnFaq.setOnClickListener {
             val intent = Intent(this, FAQActivity::class.java)
             startActivity(intent)
+        }
+
+        btnStopAll.setOnClickListener {
+            showStopAllDialog()
         }
     }
 
@@ -57,5 +63,25 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    private fun showStopAllDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Detener y salir")
+            .setMessage("Vas a detener todos los procesos y salir de la app. ¿Estas seguro?")
+            .setPositiveButton("Sí") { dialog, which ->
+                stopAllProcesses()
+                finishAffinity() // Close the app
+            }
+            .setNegativeButton("No") { dialog, which ->
+                dialog.dismiss() // Close the dialog
+            }
+            .show()
+    }
+
+    // Aquí se detendrán todos los subprocesos, servicios, etc
+    private fun stopAllProcesses() {
+        val stopIntent = Intent(this, BeaconService::class.java)
+        stopService(stopIntent)
     }
 }
