@@ -25,10 +25,11 @@ open class BLEDevice(scanResult: ScanResult) {
     /**
      * Device friendly name
      */
-    private var name: String = ""
+    var name: String = ""
 
     private var rssiList: MutableList<Int> = mutableListOf()
     private val rssiListSize = 5 // Tamaño del historial de lecturas de RSSI
+
     init {
         if (scanResult.device.name != null) {
             name = scanResult.device.name
@@ -48,7 +49,7 @@ open class BLEDevice(scanResult: ScanResult) {
         rssiList.add(rssi)
     }
 
-    fun getRssi(): Int {
+    fun calculateRssi(): Int {
         return rssiList.average().toInt()
     }
 
@@ -58,6 +59,7 @@ open class BLEDevice(scanResult: ScanResult) {
         val averageRssi = rssiList.average()
         return 10.0.pow(((measuredPower - averageRssi) / (10 * N)))
     }
+
     fun getDistance(): Double {
         val A = 1.203420305
         val B = 6.170094565
@@ -67,6 +69,4 @@ open class BLEDevice(scanResult: ScanResult) {
         val predictedDistance = Math.exp(A) * Math.pow(ratio, B) + C
         return predictedDistance
     }
-
-
 }

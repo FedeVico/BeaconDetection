@@ -21,6 +21,7 @@ class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.A
         val address: TextView = view.findViewById(R.id.text_address_value)
         val rssi: TextView = view.findViewById(R.id.text_rssi_value)
         val distance: TextView = view.findViewById(R.id.text_distance_value)
+        val name: TextView = view.findViewById(R.id.text_name_value)
     }
 
     inner class IBeaconViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -59,15 +60,16 @@ class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.A
                 iBeaconHolder.major.text = iBeacon.getMajor().toString()
                 iBeaconHolder.minor.text = iBeacon.getMinor().toString()
                 iBeaconHolder.address.text = iBeacon.getAddress()
-                iBeaconHolder.rssi.text = iBeacon.getRssi().toString()
+                iBeaconHolder.rssi.text = iBeacon.calculateRssi().toString()
                 iBeaconHolder.distance.text = iBeacon.getDistance().toString()
             }
             VIEW_TYPE_BLE -> {
                 val bleHolder = holder as BLEViewHolder
                 val ble = deviceList[position] as BLEDevice
                 bleHolder.address.text = ble.getAddress()
-                bleHolder.rssi.text = ble.getRssi().toString()
+                bleHolder.rssi.text = ble.calculateRssi().toString()
                 bleHolder.distance.text = ble.getDistance().toString()
+                bleHolder.name.text = ble.name
             }
         }
     }

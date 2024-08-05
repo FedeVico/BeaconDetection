@@ -67,6 +67,6 @@ class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanRes
     }
 
     override fun toString(): String {
-        return "UUID= $uuid Major= ${major.toString()} Minor= ${minor.toString()} rssi= ${getRssi()} distance= ${getDistance()}"
+        return "UUID= $uuid Major= ${major.toString()} Minor= ${minor.toString()} rssi= ${calculateRssi()} distance= ${getDistance()}"
     }
 }

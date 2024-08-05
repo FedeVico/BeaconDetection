@@ -3,11 +3,13 @@ package com.example.beacondetection.DB
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.Log
+import com.example.beacondetection.BeaconEntities.BLEDevice
 import com.example.beacondetection.BeaconEntities.BeaconData
 import com.example.beacondetection.BeaconEntities.IBeacon
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QueryDocumentSnapshot
+import com.google.firebase.firestore.SetOptions
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -35,7 +37,7 @@ class FirestoreHelper(private val context: Context) {
             "macAddress" to beacon.getAddress(),
             "major" to beacon.getMajor(),
             "minor" to beacon.getMinor(),
-            "rssi" to beacon.getRssi(),
+            "rssi" to beacon.calculateRssi(),
             "distance" to beacon.getDistance(),
             "timestamp" to timestampString,
             "numDevices" to 0 // Inicializar con 0 dispositivos
@@ -48,6 +50,28 @@ class FirestoreHelper(private val context: Context) {
             }
             .addOnFailureListener { e ->
                 // Handle failure
+            }
+    }
+    fun insertBLEDevice(device: BLEDevice) {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        val timestampString = dateFormat.format(Date())
+
+        val deviceData = hashMapOf(
+            "address" to device.getAddress(),
+            "rssi" to device.calculateRssi(),
+            "distance" to device.getDistance(),
+            "name" to device.name,
+            "timestamp" to timestampString
+        )
+
+        db.collection("BLEs")
+            .document(device.getAddress())
+            .set(deviceData, SetOptions.merge())
+            .addOnSuccessListener {
+                Log.d(TAG, "BLE device data added successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to add BLE device data", e)
             }
     }
 
@@ -119,19 +143,13 @@ class FirestoreHelper(private val context: Context) {
             .whereGreaterThan("timestamp", oneHourAgoString)
             .get()
             .addOnSuccessListener { result ->
-                val uniqueDevices = result.documents
-                    .mapNotNull { it.getString("deviceMacAddress") }
-                    .distinct() // Use distinct to get unique deviceMacAddress
-                    .count()
-                callback(uniqueDevices)
+                val interactionCount = result.documents.size // Cuenta todas las interacciones
+                callback(interactionCount)
             }
             .addOnFailureListener { e ->
                 callback(0)
             }
     }
-
-
-
 
     fun insertDeviceInteraction(uuid: String, macAddress: String, distance: Double) {
         if (distance < 5.0) { // Check if the distance is less than 5 meters

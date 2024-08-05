@@ -153,32 +153,32 @@ class ScanService {
                                 adapter.notifyDataSetChanged()
                             } else {
                                 val ble = BLEDevice(result)
-                                val idx = checkDeviceExists(result)
+                                val idx = checkBLEDeviceExists(result)
                                 if (idx == -1) {
-                                    // Desactivo las BLE temporalmente
-                                    //deviceList.add(ble)
+                                    // Insertar el dispositivo BLE en la base de datos al detectarlo por primera vez
+                                    insertBLEDevice(ble)
+                                    deviceList.add(ble)
                                 } else {
                                     (deviceList[idx] as BLEDevice).addRssi(result.rssi)
                                     deviceList[idx] = ble
                                 }
-                                // Insertar el dispositivo BLE en la base de datos
-                                // insertBLEDevice(ble)
                                 adapter.notifyDataSetChanged()
                             }
 
                             // Limpiar el estado de los beacons que ya no están presentes en los resultados del escaneo
-                            val currentBeaconAddresses = deviceList.map { (it as IBeacon).getAddress() }
+                            val currentBeaconAddresses = deviceList.filterIsInstance<IBeacon>().map { it.getAddress() }
                             val beaconAddressesToRemove = beaconStates.keys.filterNot { currentBeaconAddresses.contains(it) }
                             beaconAddressesToRemove.forEach { beaconStates.remove(it) }
                         }
                     } catch (e: SecurityException) {
                         Log.e(TAG, "@startScan SecurityException: " + e.message)
+                    } catch (e: ClassCastException) {
+                        Log.e(TAG, "@startScan ClassCastException: " + e.message)
                     }
                 }
             }
         }
     }
-
 
     private fun updateNumDevices(context: Context, uuid: String, count: Int) {
         FirestoreHelper.getInstance(context).db.collection("beacons")
@@ -192,16 +192,14 @@ class ScanService {
             }
     }
 
-
-
     // Funciones para insertar en la base de datos (modifica según tu estructura)
     private fun insertBeacon(beacon: IBeacon) {
         firestoreHelper.insertOrUpdateDevice(beacon)
     }
 
-    /*private fun insertBLEDevice(device: BLEDevice) {
-        firestoreHelper.insertDevice(device)
-    }*/
+    private fun insertBLEDevice(device: BLEDevice) {
+        firestoreHelper.insertBLEDevice(device)
+    }
 
     // Función auxiliar para mostrar notificaciones
     private fun showNotification(context: Context, message: String) {
@@ -227,11 +225,16 @@ class ScanService {
 
     /**
      * check if our device list already has a scan result whose MAC address is identical to the new incoming ScanResult
-     * @param result BLE scan result
+     * @param result scan result
      * @return -1 if doesn't exist
      */
-    fun checkDeviceExists(result: ScanResult): Int {
-        val indexQuery = deviceList.indexOfFirst { (it as BLEDevice).getAddress() == result.device.address }
+    private fun checkDeviceExists(result: ScanResult): Int {
+        val indexQuery = deviceList.indexOfFirst { it is IBeacon && (it as IBeacon).getAddress() == result.device.address }
+        return indexQuery
+    }
+
+    private fun checkBLEDeviceExists(result: ScanResult): Int {
+        val indexQuery = deviceList.indexOfFirst { it is BLEDevice && (it as BLEDevice).getAddress() == result.device.address }
         return indexQuery
     }
 
