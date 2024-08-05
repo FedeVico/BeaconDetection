@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.beacondetection.BeaconEntities.BLEDevice
 import com.example.beacondetection.BeaconEntities.IBeacon
+import com.example.beacondetection.DB.FirestoreHelper
 import com.example.beacondetection.R
 
 class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -31,6 +32,7 @@ class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.A
         val address: TextView = view.findViewById(R.id.text_address_value)
         val rssi: TextView = view.findViewById(R.id.text_rssi_value)
         val distance: TextView = view.findViewById(R.id.text_distance_value)
+        val numDevices: TextView = view.findViewById(R.id.text_num_devices_value)
     }
 
     // Obtiene el tipo de vista basado en el dispositivo BLE
@@ -62,7 +64,10 @@ class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.A
                 iBeaconHolder.address.text = iBeacon.getAddress()
                 iBeaconHolder.rssi.text = iBeacon.calculateRssi().toString()
                 iBeaconHolder.distance.text = iBeacon.getDistance().toString()
-            }
+
+                FirestoreHelper.getInstance(holder.itemView.context).countDevicesInRange(iBeacon.getUUID()) { numDevices ->
+                    iBeaconHolder.numDevices.text = numDevices.toString()
+                }            }
             VIEW_TYPE_BLE -> {
                 val bleHolder = holder as BLEViewHolder
                 val ble = deviceList[position] as BLEDevice

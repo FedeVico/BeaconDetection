@@ -19,6 +19,8 @@ class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanRes
     private val minorPosStart = 27
     private val minorPosEnd = 28
 
+    private var timestamp: String = ""
+    private var numDevices: Int = 0
     init {
         rawByteData = packetData
     }
@@ -65,7 +67,21 @@ class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanRes
             minor = (rawByteData[minorPosStart].toInt() and 0xff) * 0x100 + (rawByteData[minorPosEnd].toInt() and 0xff)
         return minor as Int
     }
+    fun getTimestamp(): String {
+        return timestamp
+    }
 
+    fun setTimestamp(timestamp: String) {
+        this.timestamp = timestamp
+    }
+
+    fun getNumDevices(): Int {
+        return numDevices
+    }
+
+    fun setNumDevices(numDevices: Int) {
+        this.numDevices = numDevices
+    }
     override fun toString(): String {
         return "UUID= $uuid Major= ${major.toString()} Minor= ${minor.toString()} rssi= ${calculateRssi()} distance= ${getDistance()}"
     }

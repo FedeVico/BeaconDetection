@@ -16,5 +16,6 @@
     <string name="label_distance">Distancia</string>
     <string name="label_map">Ver mapa</string>
     <string name="fecha">Fecha</string>
+    <string name="actual">actual</string>
 
 </resources>
