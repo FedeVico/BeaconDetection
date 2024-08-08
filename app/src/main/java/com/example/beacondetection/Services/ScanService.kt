@@ -23,8 +23,8 @@ class ScanService {
 
     private val bluetoothManager: BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter
-    private val builder: ScanSettings.Builder
     private lateinit var bluetoothLeScanner: BluetoothLeScanner
+    private lateinit var scanCallback: ScanCallback
 
     private val TAG = "ScanService"
 
@@ -42,10 +42,6 @@ class ScanService {
 
         firestoreHelper = FirestoreHelper.getInstance(context)
 
-        builder = ScanSettings.Builder()
-        builder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-        Log.d(TAG, "set scan mode to low latency")
-        this.adapter = adapter
         bluetoothManager = context.getSystemService(BluetoothManager::class.java)
         bluetoothAdapter = bluetoothManager.adapter
         if (bluetoothAdapter == null) {
@@ -55,6 +51,8 @@ class ScanService {
         if (isBluetoothEnabled()) {
             bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
         }
+
+        scanCallback = leScanCallback(context)
     }
 
     fun initScanner() {
@@ -90,7 +88,7 @@ class ScanService {
                 .setReportDelay(0) // Sin retraso en la notificación de resultados
                 .build()
             // Iniciar escaneo con los ajustes optimizados
-            bluetoothLeScanner.startScan(null, settings, leScanCallback(context))
+            bluetoothLeScanner.startScan(null, settings, scanCallback)
         } catch (e: SecurityException) {
             Log.e(TAG, "@startScan SecurityException: " + e.message)
         }
@@ -98,21 +96,30 @@ class ScanService {
 
     @SuppressLint("MissingPermission")
     fun stopBLEScan(context: Context) {
-        if (!isScanning)
+        if (!isScanning) {
+            Log.d(TAG, "stopBLEScan: Escaneo ya está detenido")
             return
-        Log.d(TAG, "@startBLEScan start beacon scan")
+        }
+        Log.d(TAG, "stopBLEScan: Deteniendo escaneo de beacons")
         isScanning = false
-        bluetoothLeScanner.stopScan(leScanCallback(context))
+        bluetoothLeScanner.stopScan(scanCallback)
         // Detenemos las notificaciones
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
+        Log.d(TAG, "stopBLEScan: Escaneo detenido y notificaciones canceladas")
     }
+
 
     private val beaconStates = HashMap<String, Boolean>()
 
     private fun leScanCallback(context: Context): ScanCallback {
         return object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
+                if (!isScanning) {
+                    Log.d(TAG, "onScanResult: Escaneo detenido, ignorando resultados")
+                    return
+                }
+
                 if (result != null) {
                     val scanRecord = result.scanRecord
                     super.onScanResult(callbackType, result)
@@ -145,11 +152,6 @@ class ScanService {
                                     distance
                                 )
 
-                                // Contar el número de dispositivos únicos dentro del rango de 5 metros
-                                FirestoreHelper.getInstance(context).countDevicesInRange(iBeacon.getUUID()) { numDevices ->
-                                    updateNumDevices(context, iBeacon.getUUID(), numDevices)
-                                }
-
                                 adapter.notifyDataSetChanged()
                             } else {
                                 val ble = BLEDevice(result)
@@ -180,16 +182,9 @@ class ScanService {
         }
     }
 
+
     private fun updateNumDevices(context: Context, uuid: String, count: Int) {
-        FirestoreHelper.getInstance(context).db.collection("beacons")
-            .document(uuid)
-            .update("numDevices", count)
-            .addOnSuccessListener {
-                Log.d(TAG, "Updated numDevices for beacon $uuid to $count")
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Failed to update numDevices for beacon $uuid", e)
-            }
+        FirestoreHelper.getInstance(context).updateNumDevices(uuid, count)
     }
 
     // Funciones para insertar en la base de datos (modifica según tu estructura)

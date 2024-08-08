@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
         val btnMap = findViewById<Button>(R.id.btnMap)
         val btnBeacon = findViewById<Button>(R.id.btnBeacon)
         val btnFaq = findViewById<Button>(R.id.btnFaq)
-        val btnStopAll = findViewById<Button>(R.id.btnStopAll) // Button to stop all subprocesses
+        val btnStopAll = findViewById<Button>(R.id.btnStopAll)
 
         btnBeaconScan.setOnClickListener {
             val intent = Intent(this, BeaconScanActivity::class.java)
@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Elija lo que desea mostrar en el mapa")
             .setMultiChoiceItems(options, checkedItems) { dialog, which, isChecked ->
-                checkedItems[which] = isChecked // Actualiza el estado del ítem seleccionado
+                checkedItems[which] = isChecked
             }
             .setPositiveButton("OK") { dialog, which ->
                 // Acción después de que el usuario presiona OK

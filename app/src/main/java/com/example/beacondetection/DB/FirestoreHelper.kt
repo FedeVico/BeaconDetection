@@ -4,11 +4,9 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.Log
 import com.example.beacondetection.BeaconEntities.BLEDevice
-import com.example.beacondetection.BeaconEntities.BeaconData
 import com.example.beacondetection.BeaconEntities.IBeacon
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.SetOptions
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -44,14 +42,15 @@ class FirestoreHelper(private val context: Context) {
         )
 
         db.collection("beacons").document(beacon.getUUID())
-            .set(beaconData)
+            .set(beaconData, SetOptions.merge()) // Use merge to avoid overwriting
             .addOnSuccessListener {
-                // Handle success
+                Log.d(TAG, "Beacon data added/updated successfully")
             }
             .addOnFailureListener { e ->
-                // Handle failure
+                Log.e(TAG, "Failed to add/update beacon data", e)
             }
     }
+
     fun insertBLEDevice(device: BLEDevice) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         val timestampString = dateFormat.format(Date())
@@ -93,42 +92,6 @@ class FirestoreHelper(private val context: Context) {
                 // Handle failure
                 callback(ArrayList())
             }
-    }
-
-    fun getAllBeacons(callback: (List<BeaconData>) -> Unit) {
-        db.collection("beacons")
-            .get()
-            .addOnSuccessListener { result ->
-                val beacons = mutableListOf<BeaconData>()
-                for (document in result) {
-                    val beacon = documentToBeaconData(document)
-                    if (beacon != null) {
-                        beacons.add(beacon)
-                    }
-                }
-                callback(beacons)
-            }
-            .addOnFailureListener { e ->
-                // Handle failure
-                callback(emptyList())
-            }
-    }
-
-    private fun documentToBeaconData(document: QueryDocumentSnapshot): BeaconData? {
-        val uuid = document.getString("uuid")
-        val macAddress = document.getString("macAddress")
-        val major = document.getLong("major")?.toInt()
-        val minor = document.getLong("minor")?.toInt()
-        val rssi = document.getLong("rssi")?.toInt()
-        val distance = document.getDouble("distance")
-        val timestamp = document.getString("timestamp")
-        val numDevices = document.getLong("numDevices")?.toInt() ?: 0
-
-        return if (uuid != null && macAddress != null && major != null && minor != null && rssi != null && distance != null && timestamp != null) {
-            BeaconData(uuid, macAddress, major, minor, rssi, distance, timestamp, numDevices)
-        } else {
-            null
-        }
     }
 
     fun countDevicesInRange(uuid: String, callback: (Int) -> Unit) {
@@ -186,6 +149,10 @@ class FirestoreHelper(private val context: Context) {
                             .add(interactionData)
                             .addOnSuccessListener {
                                 Log.d(TAG, "Interaction data added successfully")
+                                // Update the number of devices interacting with the beacon
+                                countDevicesInRange(uuid) { numDevices ->
+                                    updateNumDevices(uuid, numDevices)
+                                }
                             }
                             .addOnFailureListener { e ->
                                 Log.e(TAG, "Failed to add interaction data", e)
@@ -200,4 +167,15 @@ class FirestoreHelper(private val context: Context) {
         }
     }
 
+    fun updateNumDevices(uuid: String, count: Int) {
+        db.collection("beacons")
+            .document(uuid)
+            .update("numDevices", count)
+            .addOnSuccessListener {
+                Log.d(TAG, "Updated numDevices for beacon $uuid to $count")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to update numDevices for beacon $uuid", e)
+            }
+    }
 }
