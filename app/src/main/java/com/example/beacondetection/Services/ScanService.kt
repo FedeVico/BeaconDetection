@@ -39,6 +39,7 @@ class ScanService {
 
     constructor(context: Context, deviceList: ArrayList<Any>, adapter: DeviceListAdapter) {
         this.deviceList = deviceList
+        this.adapter = adapter
 
         firestoreHelper = FirestoreHelper.getInstance(context)
 
