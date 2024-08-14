@@ -17,15 +17,22 @@ class FirestoreHelper(private val context: Context) {
     companion object {
         @Volatile
         private var INSTANCE: FirestoreHelper? = null
+        private var firestoreInstance: FirebaseFirestore? = null
 
+        @JvmStatic
         fun getInstance(context: Context): FirestoreHelper {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: FirestoreHelper(context).also { INSTANCE = it }
             }
         }
+
+        @JvmStatic
+        fun setFirestoreInstance(instance: FirebaseFirestore) {
+            firestoreInstance = instance
+        }
     }
 
-    val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
+    val db: FirebaseFirestore by lazy { firestoreInstance ?: FirebaseFirestore.getInstance() }
 
     fun insertOrUpdateDevice(beacon: IBeacon) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())

@@ -224,12 +224,12 @@ class ScanService {
      * @param result scan result
      * @return -1 if doesn't exist
      */
-    private fun checkDeviceExists(result: ScanResult): Int {
+    fun checkDeviceExists(result: ScanResult): Int {
         val indexQuery = deviceList.indexOfFirst { it is IBeacon && (it as IBeacon).getAddress() == result.device.address }
         return indexQuery
     }
 
-    private fun checkBLEDeviceExists(result: ScanResult): Int {
+    fun checkBLEDeviceExists(result: ScanResult): Int {
         val indexQuery = deviceList.indexOfFirst { it is BLEDevice && (it as BLEDevice).getAddress() == result.device.address }
         return indexQuery
     }

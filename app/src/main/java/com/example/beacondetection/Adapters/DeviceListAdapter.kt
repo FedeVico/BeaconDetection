@@ -9,7 +9,7 @@ import com.example.beacondetection.BeaconEntities.IBeacon
 import com.example.beacondetection.DB.FirestoreHelper
 import com.example.beacondetection.R
 
-class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+open class DeviceListAdapter(private val deviceList: ArrayList<Any>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     // Define los tipos de vista
     companion object {
