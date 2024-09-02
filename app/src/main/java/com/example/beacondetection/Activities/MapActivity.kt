@@ -32,9 +32,9 @@ class MapActivity : AppCompatActivity() {
     private var hasArrived = false
 
     private val beaconsWithPosition = listOf(
-        BeaconWithPosition("Sala de ordenadores","11111111-1111-1111-1111-111111111111", Coordinate(37.58662, -4.64204), 0.0),
-        BeaconWithPosition("Salón principal","22222222-2222-2222-2222-222222222222", Coordinate(37.58673, -4.64180), 0.0),
-        BeaconWithPosition("Inventario","33333333-3333-3333-3333-333333333333", Coordinate(37.58656, -4.64189), 0.0)
+        BeaconWithPosition("Escritorio","11111111-1111-1111-1111-111111111111", Coordinate(37.18847724141154, -3.6031642616322315), 0.0),
+        BeaconWithPosition("Terraza","22222222-2222-2222-2222-222222222222", Coordinate(37.18846670253076, -3.603250017296174), 0.0),
+        BeaconWithPosition("Inventario","33333333-3333-3333-3333-333333333333", Coordinate(37.1885425870942, -3.6031311379982864), 0.0)
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,7 +56,7 @@ class MapActivity : AppCompatActivity() {
         Configuration.getInstance().userAgentValue = userAgentValue
 
         // Configurar la ubicación inicial
-        val initialPosition = Position(37.586621804773564, -4.641860098344363, 0.0)
+        val initialPosition = Position(37.18847724141154, -3.6031642616322315, 0.0)
 
         // Inicializar el mapa y su configuración
         mapView = findViewById(R.id.map)

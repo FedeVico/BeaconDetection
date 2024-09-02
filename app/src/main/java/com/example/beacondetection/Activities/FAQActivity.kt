@@ -37,9 +37,9 @@ class FAQActivity : AppCompatActivity() {
 
         answerList = HashMap()
         answerList[questionList[0]] = listOf("Esta aplicación permite escanear beacons y mostrar tu ubicación aproximada en un mapa en tiempo real.")
+        answerList[questionList[1]] = listOf("Los beacons son dispositivos que emiten señales Bluetooth de baja energía.")
         answerList[questionList[2]] = listOf("Para escanear beacons, dirígete a la sección de escaneo desde el menú principal.")
         answerList[questionList[3]] = listOf("Puedes acceder al mapa desde el menú principal y ver tu ubicación en función a los beacons detectados.")
-        answerList[questionList[1]] = listOf("Los beacons son dispositivos que emiten señales Bluetooth de baja energía.")
         answerList[questionList[4]] = listOf("Para mejorar la precisión, asegúrate de estar cerca del mayor número de beacons y evitar obstáculos.")
         answerList[questionList[5]] = listOf("Por ahora esta función no está disponible, pero más adelante será posible definir tus propias beacons.")
     }
