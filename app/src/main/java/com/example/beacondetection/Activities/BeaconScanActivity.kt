@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +25,7 @@ import com.example.beacondetection.databinding.ActivityBeaconScanBinding
 class BeaconScanActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityBeaconScanBinding
-    private val TAG = "MainActivity"
+    private val TAG = "BeaconScanActivity"
 
     private lateinit var scanService: ScanService
     private lateinit var adapter: DeviceListAdapter
@@ -49,6 +50,24 @@ class BeaconScanActivity : AppCompatActivity() {
 
         // Initialize FirestoreHelper
         firestoreHelper = FirestoreHelper.getInstance(this)
+    }
+
+    override fun onBackPressed() {
+        if (scanService.isScanning()) {
+            AlertDialog.Builder(this)
+                .setTitle("Detener escaneo")
+                .setMessage("¿Desea detener el escaneo de dispositivos?")
+                .setPositiveButton("Sí") { _, _ ->
+                    scanService.stopBLEScan(this)
+                    super.onBackPressed() // Volver atrás después de detener el escaneo
+                }
+                .setNegativeButton("No") { dialog, _ ->
+                    super.onBackPressed()
+                }
+                .show()
+        } else {
+            super.onBackPressed() // Volver atrás sin hacer nada
+        }
     }
 
     private fun startScan(context: Context) {

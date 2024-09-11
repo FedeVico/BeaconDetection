@@ -31,6 +31,8 @@ class MapActivity : AppCompatActivity() {
     private lateinit var directionTextView: TextView // Añadir esta línea
     private var hasArrived = false
 
+    private var positionUpdateTimer: Timer? = null
+
     private val beaconsWithPosition = listOf(
         BeaconWithPosition("Escritorio","11111111-1111-1111-1111-111111111111", Coordinate(37.18847724141154, -3.6031642616322315), 0.0),
         BeaconWithPosition("Terraza","22222222-2222-2222-2222-222222222222", Coordinate(37.18846670253076, -3.603250017296174), 0.0),
@@ -78,7 +80,8 @@ class MapActivity : AppCompatActivity() {
 
         // Iniciar un temporizador para actualizar la posición cada medio segundo si es necesario
         if (showMyLocation || showBoth) {
-            Timer().scheduleAtFixedRate(timerTask {
+            positionUpdateTimer = Timer()
+            positionUpdateTimer?.scheduleAtFixedRate(timerTask {
                 runOnUiThread {
                     updatePositionOnMap()
                 }
@@ -121,6 +124,22 @@ class MapActivity : AppCompatActivity() {
             }
             inputLocation.text.clear()
         }
+    }
+    override fun onBackPressed() {
+        // Mostrar un diálogo de confirmación
+        AlertDialog.Builder(this)
+            .setTitle("Detener actualización de posición")
+            .setMessage("¿Desea detener el servicio de actualización de posición?")
+            .setPositiveButton("Sí") { _, _ ->
+                // Detener el Timer y servicio de cálculo
+                positionUpdateTimer?.cancel()
+                positionUpdateTimer = null
+                super.onBackPressed()
+            }
+            .setNegativeButton("No") { _, _ ->
+                super.onBackPressed()
+            }
+            .show()
     }
 
     private fun showBeaconsOnMap() {
@@ -173,12 +192,12 @@ class MapActivity : AppCompatActivity() {
                     if (distanceToBeacon < 5.0 && !hasArrived) {
                         showArrivalPopup()
                         directionTextView.visibility = View.GONE
-                        hasArrived = true // Marcar como que ya ha llegado
+                        hasArrived = true
                     } else if (distanceToBeacon >= 5.0) {
                         val direction = calculateDirectionToBeacon(it, beacon.position)
                         directionTextView.text = direction
                         directionTextView.visibility = View.VISIBLE
-                        hasArrived = false // Resetear la bandera si está fuera del rango
+                        hasArrived = false
                     }
                 }
             } ?: run {

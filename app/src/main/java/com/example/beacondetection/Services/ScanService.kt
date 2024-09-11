@@ -155,17 +155,17 @@ class ScanService {
 
                                 adapter.notifyDataSetChanged()
                             } else {
-                                val ble = BLEDevice(result)
-                                val idx = checkBLEDeviceExists(result)
-                                if (idx == -1) {
-                                    // Insertar el dispositivo BLE en la base de datos al detectarlo por primera vez
-                                    insertBLEDevice(ble)
-                                    deviceList.add(ble)
-                                } else {
-                                    (deviceList[idx] as BLEDevice).addRssi(result.rssi)
-                                    deviceList[idx] = ble
-                                }
-                                adapter.notifyDataSetChanged()
+//                                val ble = BLEDevice(result)
+//                                val idx = checkBLEDeviceExists(result)
+//                                if (idx == -1) {
+//                                    // Insertar el dispositivo BLE en la base de datos al detectarlo por primera vez
+//                                    insertBLEDevice(ble)
+//                                    deviceList.add(ble)
+//                                } else {
+//                                    (deviceList[idx] as BLEDevice).addRssi(result.rssi)
+//                                    deviceList[idx] = ble
+//                                }
+//                                adapter.notifyDataSetChanged()
                             }
 
                             // Limpiar el estado de los beacons que ya no están presentes en los resultados del escaneo
