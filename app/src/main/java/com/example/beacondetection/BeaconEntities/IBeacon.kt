@@ -1,23 +1,16 @@
-package com.example.beacondetection
+package com.example.beacondetection.BeaconEntities
 
 import android.bluetooth.le.ScanResult
 import com.example.beacondetection.utils.ConversionUtils
 
 class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanResult) {
+    // UUID
+    var uuid: String = ""
 
-    /**
-     * beacon UUID
-     */
-    private var uuid: String = ""
-
-    /**
-     * packet raw data
-     */
+    // full packet
     private var rawByteData: ByteArray = ByteArray(30)
 
-    /**
-     * major minor, and their position (based on iBeacon specs)
-     */
+    // Major and minor values
     private var major: Int? = null
     private val majorPosStart = 25
     private val majorPosEnd = 26
@@ -26,14 +19,13 @@ class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanRes
     private val minorPosStart = 27
     private val minorPosEnd = 28
 
+    private var timestamp: String = ""
+    private var numDevices: Int = 0
     init {
         rawByteData = packetData
-
     }
 
-    /**
-     * Parse iBeacon UUID from packet
-     */
+    // Parse UUID from packet
     private fun parseUUID() {
         var startByte = 2
         while (startByte <= 5) {
@@ -54,38 +46,43 @@ class IBeacon(scanResult: ScanResult, packetData: ByteArray) : BLEDevice(scanRes
         }
     }
 
-    /**
-     * UUID getter method
-     * if UUID is not calculated, calculate from packet raw data, then store to property
-     */
+    // UUID getter method
     fun getUUID(): String {
-        if (uuid.isNullOrEmpty()) {
+        if (uuid.isEmpty()) {
             parseUUID()
         }
         return uuid
     }
 
-    /**
-     * Get iBeacon major
-     * if major is not calculated, calculate from packet raw data, then store to property
-     */
+    // Get iBeacon major
     fun getMajor(): Int {
         if (major == null)
             major = (rawByteData[majorPosStart].toInt() and 0xff) * 0x100 + (rawByteData[majorPosEnd].toInt() and 0xff)
         return major as Int
     }
 
-    /**
-     * Get iBeacon minor
-     * if minor is not calculated, calculate from packet raw data, then store to property
-     */
+    // Get iBeacon minor
     fun getMinor(): Int {
         if (minor == null)
             minor = (rawByteData[minorPosStart].toInt() and 0xff) * 0x100 + (rawByteData[minorPosEnd].toInt() and 0xff)
         return minor as Int
     }
+    fun getTimestamp(): String {
+        return timestamp
+    }
 
+    fun setTimestamp(timestamp: String) {
+        this.timestamp = timestamp
+    }
+
+    fun getNumDevices(): Int {
+        return numDevices
+    }
+
+    fun setNumDevices(numDevices: Int) {
+        this.numDevices = numDevices
+    }
     override fun toString(): String {
-        return "Major= " + major.toString() + " Minor= " + minor.toString() + " rssi=" + getRssi() + "distance=" + getDistance()
+        return "UUID= $uuid Major= ${major.toString()} Minor= ${minor.toString()} rssi= ${calculateRssi()} distance= ${getDistance()}"
     }
 }
