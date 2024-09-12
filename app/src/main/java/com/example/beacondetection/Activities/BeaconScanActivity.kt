@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -54,7 +55,7 @@ class BeaconScanActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         if (scanService.isScanning()) {
-            AlertDialog.Builder(this)
+            val alertDialog = AlertDialog.Builder(this)
                 .setTitle("Detener escaneo")
                 .setMessage("¿Desea detener el escaneo de dispositivos?")
                 .setPositiveButton("Sí") { _, _ ->
@@ -64,11 +65,19 @@ class BeaconScanActivity : AppCompatActivity() {
                 .setNegativeButton("No") { dialog, _ ->
                     super.onBackPressed()
                 }
-                .show()
+                .create()
+
+            alertDialog.setOnShowListener {
+                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.WHITE)
+                alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.WHITE)
+            }
+
+            alertDialog.show()
         } else {
             super.onBackPressed() // Volver atrás sin hacer nada
         }
     }
+
 
     private fun startScan(context: Context) {
         // Check for permissions before starting the scan

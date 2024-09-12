@@ -126,8 +126,8 @@ class MapActivity : AppCompatActivity() {
         }
     }
     override fun onBackPressed() {
-        // Mostrar un diálogo de confirmación
-        AlertDialog.Builder(this)
+        // Crear el diálogo de confirmación
+        val alertDialog = AlertDialog.Builder(this)
             .setTitle("Detener actualización de posición")
             .setMessage("¿Desea detener el servicio de actualización de posición?")
             .setPositiveButton("Sí") { _, _ ->
@@ -139,8 +139,11 @@ class MapActivity : AppCompatActivity() {
             .setNegativeButton("No") { _, _ ->
                 super.onBackPressed()
             }
-            .show()
+            .create()
+        // Mostrar el diálogo
+        alertDialog.show()
     }
+
 
     private fun showBeaconsOnMap() {
         beaconsWithPosition.forEach { beacon ->

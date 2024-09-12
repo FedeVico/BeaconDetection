@@ -2,11 +2,13 @@ package com.example.beacondetection.BeaconEntities
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
-import kotlin.math.pow
 
 @SuppressLint("MissingPermission")
 open class BLEDevice(scanResult: ScanResult) {
 
+    private var rssiList: MutableList<Int> = mutableListOf()
+    private val kalmanFilter = KalmanFilter(0.0, 1.0, 0.125, 1.0)
+    private val rssiListSize = 10
     /**
      * The measured signal strength of the Bluetooth packet
      */
@@ -27,9 +29,6 @@ open class BLEDevice(scanResult: ScanResult) {
      */
     var name: String = ""
 
-    private var rssiList: MutableList<Int> = mutableListOf()
-    private val rssiListSize = 5 // Tamaño del historial de lecturas de RSSI
-
     init {
         if (scanResult.device.name != null) {
             name = scanResult.device.name
@@ -37,36 +36,40 @@ open class BLEDevice(scanResult: ScanResult) {
         address = scanResult.device.address
         rssiList.add(scanResult.rssi)
     }
-
     fun getAddress(): String {
         return address
     }
 
+    // Actualizar el filtro de Kalman y suavizar el RSSI
     fun addRssi(rssi: Int) {
         if (rssiList.size >= rssiListSize) {
             rssiList.removeAt(0)
         }
-        rssiList.add(rssi)
+        val filteredRssi = kalmanFilter.update(rssi.toDouble())
+        rssiList.add(filteredRssi.toInt())
     }
 
     fun calculateRssi(): Int {
         return rssiList.average().toInt()
     }
 
-    fun getDistance1(): Double {
-        val measuredPower = -59 // Potencia medida en dBm a 1 metro de distancia
-        val N = 2.0 // Factor de atenuación de la señal
-        val averageRssi = rssiList.average()
-        return 10.0.pow(((measuredPower - averageRssi) / (10 * N)))
-    }
-
     fun getDistance(): Double {
         val A = 1.203420305
         val B = 6.170094565
         val C = -0.203420305
-        val measuredPower = -53 // Potencia medida en dBm a 1 metro de distancia
-        val ratio = rssiList.average() / measuredPower
-        val predictedDistance = Math.exp(A) * Math.pow(ratio, B) + C
-        return predictedDistance
+        val measuredPower = -5
+        val ratio = calculateRssi().toDouble() / measuredPower
+        return Math.exp(A) * Math.pow(ratio, B) + C
     }
 }
+
+class KalmanFilter(private var estimate: Double, private var errorEstimate: Double, private var processNoise: Double, private var measurementNoise: Double) {
+    fun update(measurement: Double): Double {
+        val kalmanGain = errorEstimate / (errorEstimate + measurementNoise)
+        estimate = estimate + kalmanGain * (measurement - estimate)
+        errorEstimate = (1 - kalmanGain) * errorEstimate + processNoise
+        return estimate
+    }
+}
+
+
